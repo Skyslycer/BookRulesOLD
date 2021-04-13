@@ -1,3 +1,5 @@
+### BookRUles
+
 BookRules is a rules plugin, where you need to accept the rules to play.
 
 Click through the wiki pages to know how to use it! If you have an issue, click on the issues tab and report your issue!
