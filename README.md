@@ -1,4 +1,4 @@
-### BookRUles
+### BookRules
 
 BookRules is a rules plugin, where you need to accept the rules to play.
 
