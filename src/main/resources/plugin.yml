@@ -1,0 +1,14 @@
+name: BookRules
+version: @version@
+main: de.skyslycer.bookrules.BookRules
+api-version: 1.13
+prefix: BookRules
+authors: [Skyslycer]
+description: A plugin that opens a book to every player on first join, where your need to accept the rules.
+softdepend: [PlaceholderAPI,ProtocolLib]
+
+commands:
+  declinerules:
+  acceptrules:
+  bookrules:
+  rulebook:
