@@ -2,7 +2,6 @@ package de.skyslycer.bookrules.commands;
 
 import de.skyslycer.bookrules.BookRules;
 import de.skyslycer.bookrules.util.Data;
-import de.skyslycer.bookrules.util.PlayerSaver;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -12,7 +11,6 @@ import org.bukkit.entity.Player;
 
 public class DeclineRulesCommand implements CommandExecutor {
     Data data = BookRules.data;
-    PlayerSaver playerSaver = new PlayerSaver();
     String kickText = data.kickText;
 
     @Override
@@ -23,10 +21,10 @@ public class DeclineRulesCommand implements CommandExecutor {
         }
         Player player = (Player) sender;
 
-        BookRules.debug("Player " + player.getName() + " clicked the decline button or ran the command '/decline'");
+        BookRules.debug("Player " + player.getName() + " clicked the decline button or ran the command '/declinerules'");
 
         if(data.usePermissions) {
-            if(!player.hasPermission("bookrules.rules")) {
+            if(!player.hasPermission("bookrules.decline")) {
                 player.sendMessage(data.prefix + data.noPermission);
                 BookRules.debug("Player " + player.getName() + " doesn't have permission (bookrules.rules), passing, no action taken.");
                 return true;
@@ -37,9 +35,9 @@ public class DeclineRulesCommand implements CommandExecutor {
             kickText = PlaceholderAPI.setPlaceholders(player, kickText);
         }
 
-        if(playerSaver.containsInFile(player.getUniqueId().toString(), "plugins//BookRules//players.txt")) {
+        if(data.players.contains(player.getUniqueId().toString())) {
             BookRules.debug("Player " + player.getName() + " did accept the rules (is registered in players.txt), removing entry, caused by player.");
-            playerSaver.replaceInFile("plugins//BookRules//players.txt", player.getUniqueId().toString(), "");
+            data.players.remove(player.getUniqueId().toString());
         }else {
             BookRules.debug("Player " + player.getName() + " didn't accept the rules (isn't registered in players.txt).");
         }

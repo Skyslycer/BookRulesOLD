@@ -26,7 +26,6 @@ import java.util.List;
 public class RuleBookCommand implements CommandExecutor {
     Data data = BookRules.data;
     BookOpener bookOpener = new BookOpener();
-    ItemStack book;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -40,7 +39,7 @@ public class RuleBookCommand implements CommandExecutor {
         }
         Player player = (Player) sender;
         if(data.usePermissions) {
-            if(!player.hasPermission("bookrules.rules")) {
+            if(!player.hasPermission("bookrules.openbook")) {
                 player.sendMessage(data.prefix + data.noPermission);
                 BookRules.debug("Player " + player.getName() + " doesn't have permission (bookrules.rules), passing, no action taken.");
                 return true;
@@ -68,8 +67,8 @@ public class RuleBookCommand implements CommandExecutor {
         Component component = MiniMessage.get().parse(acceptText, templates);
         BaseComponent[] baseComponents = BungeeComponentSerializer.get().serialize(component);
 
-        for(int i = 0; i < bookContent.size(); i++) {
-            bookMeta.addPage(bookContent.get(i));
+        for (String s : bookContent) {
+            bookMeta.addPage(s);
         }
 
         BookRules.debug("Opening book to the player " + player.getName() + ".");

@@ -1,9 +1,10 @@
 package de.skyslycer.bookrules.util;
 
-import com.google.gson.internal.bind.util.ISO8601Utils;
 import de.skyslycer.bookrules.BookRules;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
+import java.io.*;
 import java.util.ArrayList;
 
 public class Data {
@@ -12,7 +13,6 @@ public class Data {
     public String acceptButton;
     public String declineButton;
     public String kickText;
-    public String page = "";
     public String noPermission;
     public String acceptRules;
     public String alreadyAccepted;
@@ -20,6 +20,7 @@ public class Data {
     public boolean usePermissions;
     public ArrayList<String> bookContent = new ArrayList<>();
     public ArrayList<String> rawBookContent;
+    public ArrayList<String> players = new ArrayList<>();
 
     public void instantiateFile() {
         BookRules.debug("Starting config.yml reading");
@@ -85,20 +86,18 @@ public class Data {
         debugMode = configFile.getBoolean("debug-mode");
 
         if(configFile.contains("content")) {
+            String page;
             bookContent.clear();
             for(String key : configFile.getKeys("content")) {
                 rawBookContent = configFile.getArrayList("content." + key);
-                for (String s : rawBookContent) {
-                    page = page + s + "\n";
-                }
+                page = String.join("\n§r", rawBookContent);
                 page = ChatColor.translateAlternateColorCodes('&', page);
                 bookContent.add(page);
-                page = "";
             }
         }else {
             ArrayList<String> default1 = new ArrayList<>();
             default1.add("&cIf you see this, please contact a server administrator or owner to configure this plugin properly.");
-            default1.add("&0If you want to know how configure this plugin, please visit the plugin page. The wiki is well documented and easy to understand.");
+            default1.add("If you want to know how configure this plugin, please visit the plugin page. The wiki is well documented and easy to understand.");
             default1.add("Plugin page: http://bit.ly/bookrules");
             ArrayList<String> default2 = new ArrayList<>();
             default2.add("&7[&61&7] &6Don't grief!");
@@ -108,12 +107,10 @@ public class Data {
         }
         configFile.save();
         int i = 1;
-        String contentDebug = "Book content (except the last page):";
         for (String page : bookContent) {
-            contentDebug = contentDebug + "\n\n" + "Page " + i + ":\n" + page;
+            BookRules.debug("\n" + "Page " + i + ":\n" + page);
             i++;
         }
-        BookRules.debug(contentDebug);
 
         prefix = ChatColor.translateAlternateColorCodes('&', prefix);
         acceptText = ChatColor.translateAlternateColorCodes('&', acceptText);
@@ -123,5 +120,73 @@ public class Data {
         noPermission = ChatColor.translateAlternateColorCodes('&', noPermission);
         alreadyAccepted = ChatColor.translateAlternateColorCodes('&', alreadyAccepted);
         acceptRules = ChatColor.translateAlternateColorCodes('&', acceptRules);
+    }
+
+    public void getPlayerData() {
+        Bukkit.getScheduler().runTaskAsynchronously(BookRules.getPlugin(BookRules.class), () -> {
+            try {
+                players.clear();
+                File file = new File("plugins//BookRules//players.txt");
+                file.createNewFile();
+                FileReader reader = new FileReader("plugins//BookRules//players.txt");
+                BufferedReader bufferedReader = new BufferedReader(reader);
+                String line;
+
+                while ((line = bufferedReader.readLine()) != null) {
+                    players.add(line);
+                    BookRules.debug("Adding UUID " + line + " to cache (accepted the rules)");
+                }
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public void setPlayerData() {
+        try {
+            System.out.println(players);
+            File file = new File("plugins//BookRules//players.txt");
+            file.delete();
+            file.createNewFile();
+            FileWriter writer = new FileWriter("plugins//BookRules//players.txt", false);
+            String toWrite = String.join("\n", players);
+            writer.write(toWrite);
+            if(!(toWrite.length() == 0)) {
+                BookRules.debug("Saving cache to file:\n" + toWrite);
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void reloadPlayerData() {
+        try {
+            System.out.println(players);
+            File file = new File("plugins//BookRules//players.txt");
+            file.delete();
+            file.createNewFile();
+            FileWriter writer = new FileWriter("plugins//BookRules//players.txt", false);
+            String toWrite = String.join("\n", players);
+            writer.write(toWrite);
+            if(!(toWrite.length() == 0)) {
+                BookRules.debug("Saving cache to file:\n" + toWrite);
+            }
+            writer.close();
+            players.clear();
+            file.createNewFile();
+            FileReader reader = new FileReader("plugins//BookRules//players.txt");
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            String line;
+
+            while ((line = bufferedReader.readLine()) != null) {
+                players.add(line);
+                BookRules.debug("Adding UUID " + line + " to cache (accepted the rules)");
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
