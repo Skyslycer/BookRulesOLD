@@ -18,6 +18,7 @@ public final class BookRules extends JavaPlugin {
     @Override
     public void onEnable() {
         data.instantiateFile();
+        data.getPlayerData();
 
         Bukkit.getConsoleSender().sendMessage(data.prefix + "§aBookRules §7successfully loaded!");
         if(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
@@ -40,9 +41,13 @@ public final class BookRules extends JavaPlugin {
         pluginManager.registerEvents(new MoveEvent(), this);
     }
 
+    public void onDisable() {
+        data.setPlayerData();
+    }
+
     public static void debug(String text) {
         if(data.debugMode) {
-            Bukkit.getLogger().info("§7[§cBookRules§7] " + text);
+            Bukkit.getLogger().info("§7[§cBookRules§7] Debug: " + text);
         }
     }
 }

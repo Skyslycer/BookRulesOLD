@@ -3,7 +3,6 @@ package de.skyslycer.bookrules.events;
 import de.skyslycer.bookrules.BookRules;
 import de.skyslycer.bookrules.util.BookOpener;
 import de.skyslycer.bookrules.util.Data;
-import de.skyslycer.bookrules.util.PlayerSaver;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JoinEvent implements Listener {
-    PlayerSaver playerSaver = new PlayerSaver();
     Data data = BookRules.data;
     BookOpener bookOpener = new BookOpener();
     public ItemStack book;
@@ -39,11 +37,11 @@ public class JoinEvent implements Listener {
 
         BookRules.debug("Player " + player.getName() + " joined the server.");
 
-        if(!playerSaver.containsInFile(player.getUniqueId().toString(), "plugins//BookRules//players.txt")) {
+        if(!data.players.contains(player.getUniqueId().toString())) {
             BookRules.debug("Player " + player.getName() + " didn't accept the rules (isn't registered in players.txt).");
 
             if(data.usePermissions) {
-                if(!player.hasPermission("bookrules.rules")) {
+                if(!player.hasPermission("bookrules.onjoin")) {
                     BookRules.debug("Player " + player.getName() + " doesn't have permission (bookrules.rules), passing, no action taken.");
                     return;
                 }
@@ -70,8 +68,8 @@ public class JoinEvent implements Listener {
             Component component = MiniMessage.get().parse(acceptText, templates);
             BaseComponent[] baseComponents = BungeeComponentSerializer.get().serialize(component);
 
-            for(int i = 0; i < bookContent.size(); i++) {
-                bookMeta.addPage(bookContent.get(i));
+            for (String s : bookContent) {
+                bookMeta.addPage(s);
             }
 
             BookRules.debug("Opening book to the player " + player.getName() + ".");
