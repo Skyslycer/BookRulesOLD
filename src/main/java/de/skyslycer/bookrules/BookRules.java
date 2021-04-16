@@ -120,7 +120,7 @@ public final class BookRules extends JavaPlugin {
     }
 
     public void startThread() {
-        if (timer == null) return;
+        if (timer != null) return;
         this.timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
