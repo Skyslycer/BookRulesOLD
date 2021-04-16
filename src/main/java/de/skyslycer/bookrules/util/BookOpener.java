@@ -13,11 +13,13 @@ import io.netty.buffer.Unpooled;
 import java.lang.reflect.Constructor;
 
 public class BookOpener {
-    public void open(Player player, ItemStack book) {
+
+    public static void open(Player player, ItemStack book) {
         if(MCVersion.getVersion().isNewerThan(MCVersion.v1_12_R1)) {
-            if(MCVersion.getVersion().isNewerThan(MCVersion.v1_13_R2)) {
+            if (MCVersion.getVersion().isNewerThan(MCVersion.v1_13_R2)) {
                 player.openBook(book);
             }
+
             int slot = player.getInventory().getHeldItemSlot();
             ItemStack old = player.getInventory().getItem(slot);
             player.getInventory().setItem(slot, book);
@@ -42,13 +44,15 @@ public class BookOpener {
             }
 
             player.getInventory().setItem(slot, old);
-        }else {
-            if(MCVersion.getVersion().isOlderThan(MCVersion.v1_12_R1)) {
+        } else {
+            if (MCVersion.getVersion().isOlderThan(MCVersion.v1_12_R1)) {
                 Bukkit.getLogger().warning("§4You are running an unsupported version! Don't expect support/working features!");
             }
+
             int slot = player.getInventory().getHeldItemSlot();
             ItemStack old = player.getInventory().getItem(slot);
             player.getInventory().setItem(slot, book);
+
             try {
                 PacketContainer pc = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.CUSTOM_PAYLOAD);
                 pc.getModifier().writeDefaults();
@@ -61,6 +65,7 @@ public class BookOpener {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
             player.getInventory().setItem(slot, old);
         }
     }

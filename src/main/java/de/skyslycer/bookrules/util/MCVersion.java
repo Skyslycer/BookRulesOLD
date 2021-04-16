@@ -22,8 +22,8 @@ public enum MCVersion {
     v1_16_R3(163, 16);
 
     private static MCVersion version;
-    private int id;
-    private int majorId;
+    private final int id;
+    private final int majorId;
 
     MCVersion(int id, int majorId) {
         this.id = id;
