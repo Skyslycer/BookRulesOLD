@@ -22,7 +22,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class JoinEvent implements Listener {
     Data data = BookRules.data;
@@ -58,7 +60,7 @@ public class JoinEvent implements Listener {
                 }
             }
 
-            List<Template> templates = List.of(
+            List<Template> templates = Arrays.asList(
                     Template.of("acceptbutton", Component.text(data.acceptButton).color(NamedTextColor.GREEN).clickEvent(
                             ClickEvent.runCommand("/acceptrules"))),
                     Template.of("declinebutton", Component.text(data.declineButton).color(NamedTextColor.RED).clickEvent(

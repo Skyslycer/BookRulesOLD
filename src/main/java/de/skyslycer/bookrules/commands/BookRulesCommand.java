@@ -40,7 +40,7 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                 }
             }
             message = message + "§7Links:\n" +
-                    "§cDiscord:§7 https://discord.gg/MJkVb2NMPS\n" +
+                    "§cDiscord:§7 https://discord.gg/jTkfTDGr5c\n" +
                     "§cDownload:§7 http://bit.ly/bookrules";
             sender.sendMessage(message);
         }else if(args.length == 1) {

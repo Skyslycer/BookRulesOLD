@@ -21,6 +21,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RuleBookCommand implements CommandExecutor {
@@ -57,7 +58,7 @@ public class RuleBookCommand implements CommandExecutor {
             }
         }
 
-        List<Template> templates = List.of(
+        List<Template> templates = Arrays.asList(
                 Template.of("acceptbutton", Component.text(data.acceptButton).color(NamedTextColor.GREEN).clickEvent(
                         ClickEvent.runCommand("/acceptrules"))),
                 Template.of("declinebutton", Component.text(data.declineButton).color(NamedTextColor.RED).clickEvent(
