@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BookRulesCommand implements CommandExecutor, TabCompleter {
-    Data data = BookRules.data;
+    Data data = BookRules.getInstance().getData();
 
     String kickText = data.kickText;
     String message;

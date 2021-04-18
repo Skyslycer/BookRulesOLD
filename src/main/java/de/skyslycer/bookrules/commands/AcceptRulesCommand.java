@@ -8,7 +8,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class AcceptRulesCommand implements CommandExecutor {
-    Data data = BookRules.data;
+    Data data = BookRules.getInstance().getData();
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(!(sender instanceof Player)) {
@@ -31,6 +31,7 @@ public class AcceptRulesCommand implements CommandExecutor {
             BookRules.debug("Player " + player.getName() + " didn't accept the rules (isn't registered in players.txt).");
             BookRules.debug("Registering player " + player.getName() + " in players.txt (player accepted the rules).");
             data.players.add(player.getUniqueId().toString());
+            BookRules.getInstance().getPlayerCache().remove(player);
             player.sendMessage(data.prefix + data.acceptRules);
             player.getOpenInventory().close();
         }
