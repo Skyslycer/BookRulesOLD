@@ -15,7 +15,7 @@ public class JoinQuitListener implements Listener {
 
         if(!bookRules.getData().players.contains(event.getPlayer().getUniqueId().toString())) {
             bookRules.startThread();
-            bookRules.openBook(event.getPlayer());
+            bookRules.openBook(event.getPlayer(), "bookrules.onjoin");
             bookRules.getPlayerCache().put(event.getPlayer(), event.getPlayer().getLocation());
         }
     }

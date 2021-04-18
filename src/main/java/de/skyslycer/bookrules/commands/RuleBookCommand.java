@@ -17,7 +17,7 @@ public class RuleBookCommand implements CommandExecutor {
             return false;
         }
 
-        bookRules.openBook((Player) sender);
+        bookRules.openBook((Player) sender, "bookrules.openbook");
         return true;
     }
 }

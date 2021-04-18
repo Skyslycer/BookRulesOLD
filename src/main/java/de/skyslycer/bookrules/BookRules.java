@@ -68,18 +68,18 @@ public final class BookRules extends JavaPlugin {
         data.setPlayerData();
     }
 
-    public void openBook(Player player) {
+    public void openBook(Player player, String permission) {
         ArrayList<String> bookContent = data.bookContent;
         String acceptText = data.acceptText;
 
-        BookRules.debug("Player " + player.getName() + " joined the server.");
+        BookRules.debug("Open book for " + player.getName() + ".");
 
         if(!data.players.contains(player.getUniqueId().toString())) {
             BookRules.debug("Player " + player.getName() + " didn't accept the rules (isn't registered in players.txt).");
 
             if (data.usePermissions) {
-                if (!player.hasPermission("bookrules.onjoin")) {
-                    BookRules.debug("Player " + player.getName() + " doesn't have permission (bookrules.rules), passing, no action taken.");
+                if (!player.hasPermission(permission)) {
+                    BookRules.debug("Player " + player.getName() + " doesn't have permission (" + permission + "), passing, no action taken.");
                     return;
                 }
             }
@@ -131,7 +131,7 @@ public final class BookRules extends JavaPlugin {
                     } else {
                         if (player.getLocation().distance(location) >= 0.5D)
                             sync(() -> player.teleport(location));
-                        sync(() -> openBook(player));
+                        sync(() -> openBook(player, "bookrules.onclose"));
                     }
                 });
                 if (playerCache.isEmpty()) {
