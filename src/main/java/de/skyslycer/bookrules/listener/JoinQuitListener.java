@@ -24,4 +24,5 @@ public class JoinQuitListener implements Listener {
     public void onPlayerQuitEvent(PlayerQuitEvent event) {
         BookRules.getInstance().getPlayerCache().remove(event.getPlayer());
     }
+    
 }

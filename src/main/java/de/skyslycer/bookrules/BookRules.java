@@ -163,4 +163,5 @@ public final class BookRules extends JavaPlugin {
     public static BookRules getInstance() {
         return instance;
     }
+    
 }

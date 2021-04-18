@@ -8,7 +8,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class AcceptRulesCommand implements CommandExecutor {
+
     Data data = BookRules.getInstance().getData();
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(!(sender instanceof Player)) {
@@ -37,4 +39,5 @@ public class AcceptRulesCommand implements CommandExecutor {
         }
         return false;
     }
+    
 }

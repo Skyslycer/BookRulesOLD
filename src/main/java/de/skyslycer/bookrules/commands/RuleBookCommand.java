@@ -20,4 +20,5 @@ public class RuleBookCommand implements CommandExecutor {
         bookRules.openBook((Player) sender, "bookrules.openbook");
         return true;
     }
+    
 }

@@ -47,4 +47,5 @@ public class DeclineRulesCommand implements CommandExecutor {
         player.kickPlayer(kickText);
         return false;
     }
+    
 }
