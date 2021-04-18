@@ -8,31 +8,17 @@ plugins {
 group = 'de.skyslycer'
 version = '1.1'
 
-sourceCompatibility = "1.9"
-targetCompatibility = "1.9"
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
 
 compileJava.options.encoding "UTF-8"
 
 repositories {
     mavenCentral()
-    maven {
-        name = 'spigotmc-repo'
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-    }
-    maven {
-        name = 'sonatype'
-        url = 'https://oss.sonatype.org/content/groups/public/'
-    }
-    maven {
-        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
-    }
-    maven {
-        name = "sonatype-oss-snapshots"
-        url = "https://oss.sonatype.org/content/repositories/snapshots/"
-    }
-    maven {
-        url "https://plugins.gradle.org/m2/"
-    }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url 'https://oss.sonatype.org/content/groups/public/' }
+    maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     maven { url "https://repo.dmulloy2.net/repository/public/" }
 }
 
