@@ -1,4 +1,4 @@
-package de.skyslycer.bookrules.events;
+package de.skyslycer.bookrules.listener;
 
 import de.skyslycer.bookrules.BookRules;
 import org.bukkit.event.EventHandler;

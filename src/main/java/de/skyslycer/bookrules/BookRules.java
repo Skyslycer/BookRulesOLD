@@ -4,7 +4,7 @@ import de.skyslycer.bookrules.commands.AcceptRulesCommand;
 import de.skyslycer.bookrules.commands.BookRulesCommand;
 import de.skyslycer.bookrules.commands.DeclineRulesCommand;
 import de.skyslycer.bookrules.commands.RuleBookCommand;
-import de.skyslycer.bookrules.events.JoinQuitListener;
+import de.skyslycer.bookrules.listener.JoinQuitListener;
 import de.skyslycer.bookrules.util.BookOpener;
 import de.skyslycer.bookrules.util.Data;
 import de.skyslycer.bookrules.util.MCVersion;
