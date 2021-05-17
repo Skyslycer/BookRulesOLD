@@ -1,7 +1,8 @@
 package de.skyslycer.bookrules.commands;
 
-import de.skyslycer.bookrules.BookRules;
-import de.skyslycer.bookrules.util.Data;
+import de.skyslycer.bookrules.core.MessageManager;
+import de.skyslycer.bookrules.core.PermissionManager;
+import de.skyslycer.bookrules.api.RulesAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -11,39 +12,44 @@ import org.bukkit.entity.Player;
 
 public class DeclineRulesCommand implements CommandExecutor {
 
-    Data data = BookRules.getInstance().getData();
-    String kickText = data.kickText;
+    MessageManager messageManager;
+    PermissionManager permissionManager;
+    String kickText;
+    RulesAPI rulesAPI = new RulesAPI();
+
+    public void injectData(MessageManager messageManager, PermissionManager permissionManager) {
+        this.messageManager = messageManager;
+        this.permissionManager = permissionManager;
+        this.kickText = messageManager.kickText;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(data.prefix + "§4Only players can use this command!");
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PLAYER, sender);
             return true;
         }
 
         Player player = (Player) sender;
-        BookRules.debug("Player " + player.getName() + " clicked the decline button or ran the command '/declinerules'");
+        messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINING, player.getName());
 
-        if (data.usePermissions) {
-            if (!player.hasPermission("bookrules.decline")) {
-                player.sendMessage(data.prefix + data.noPermission);
-                BookRules.debug("Player " + player.getName() + " doesn't have permission (bookrules.rules), passing, no action taken.");
-                return true;
-            }
+        if (!permissionManager.hasExtraPermission(player, "bookrules.decline")) {
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, player);
+            messageManager.sendDebug(MessageManager.DebugType.DEBUG_NO_PERMISSION, player.getName(), "bookrules.decline");
+            return true;
         }
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             kickText = PlaceholderAPI.setPlaceholders(player, kickText);
         }
 
-        if (data.players.contains(player.getUniqueId().toString())) {
-            BookRules.debug("Player " + player.getName() + " did accept the rules (is registered in players.txt), removing entry, caused by player.");
-            data.players.remove(player.getUniqueId().toString());
+        if (rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString())) {
+            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
+            rulesAPI.declineRules(player.getUniqueId().toString());
         } else {
-            BookRules.debug("Player " + player.getName() + " didn't accept the rules (isn't registered in players.txt).");
+            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
         }
-
-        BookRules.debug("Kicking player " + player.getName() + " for declining the rules.");
+        messageManager.sendDebug(MessageManager.DebugType.DEBUG_KICK, player.getName());
         player.kickPlayer(kickText);
         return false;
     }

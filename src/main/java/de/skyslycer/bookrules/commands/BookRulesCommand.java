@@ -1,7 +1,8 @@
 package de.skyslycer.bookrules.commands;
 
 import de.skyslycer.bookrules.BookRules;
-import de.skyslycer.bookrules.util.Data;
+import de.skyslycer.bookrules.core.MessageManager;
+import de.skyslycer.bookrules.api.RulesAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -13,31 +14,40 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class BookRulesCommand implements CommandExecutor, TabCompleter {
+    RulesAPI rulesAPI = new RulesAPI();
 
-    Data data = BookRules.getInstance().getData();
+    String kickText;
 
-    String kickText = data.kickText;
-    String message;
+    MessageManager messageManager;
+    BookRules bookRules;
+
+    public void injectData(MessageManager messageManager, BookRules bookRules) {
+        this.messageManager = messageManager;
+        this.kickText = messageManager.kickText;
+        this.bookRules = bookRules;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(args.length == 0) {
-            message = "§7[§cBookRules§7] §cBookRules §7by §cSkyslycer\n";
+            //sending permission-based instructions to the player
+            String message = "§7[§cBookRules§7] §cBookRules §7by §cSkyslycer\n";
             if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload") || sender.hasPermission("bookrules.acceptrules") || sender.hasPermission("bookrules.declinerules") || sender.hasPermission("bookrules.status")) {
                 message = message + "§cCommands:\n";
                 if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) {
                     message = message + "§c/bookrules reload §7- reload the config\n";
                 }
                 if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.status")) {
-                    message = message + "§c/bookrules status [player] §7- check the status of a sender\n\n";
+                    message = message + "§c/bookrules status [player] §7- check the status of a player\n";
                 }
                 if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.acceptrules")) {
-                    message = message + "§c/bookrules acceptrules [player] §7- accept the rules for a sender\n";
+                    message = message + "§c/bookrules acceptrules [player] §7- accept the rules for a player\n";
                 }
                 if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) {
-                    message = message + "§c/bookrules declinerules [player] §7- decline the rules for a sender\n\n";
+                    message = message + "§c/bookrules declinerules [player] §7- decline the rules for a player\n\n";
                 }
             }
             message = message + "§7Links:\n" +
@@ -45,125 +55,178 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                     "§cDownload:§7 http://bit.ly/bookrules";
             sender.sendMessage(message);
         }else if(args.length == 1) {
-            if((sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) && args[0].equals("reload")) {
-                data.instantiateFile();
-                data.reloadPlayerData();
-                sender.sendMessage("§7[§cBookRules§7] §cBookRules §7successfully §creloaded!");
-            }else if((sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.acceptrules")) && args[0].equals("acceptrules")) {
-                if(!(sender instanceof Player)) {
-                    sender.sendMessage(data.prefix + "§4Only players can use this command!");
-                    return true;
-                }
-                Player player = (Player) sender;
-                if(data.players.contains(player.getUniqueId().toString())) {
-                    player.sendMessage(data.prefix + data.alreadyAccepted);
-                    BookRules.debug("Player " + player.getName() + " did accept the rules (is registered in players.txt), passing, no action taken.");
-                }else {
-                    BookRules.debug("Player " + player.getName() + " didn't accept the rules (isn't registered in players.txt).");
-                    BookRules.debug("Registering player " + player.getName() + " in players.txt (player accepted the rules).");
-                    data.players.add(player.getUniqueId().toString());
-                    player.sendMessage(data.prefix + data.acceptRules);
-                    player.getOpenInventory().close();
-                }
-            }else if((sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) && args[0].equals("declinerules")) {
-                if(!(sender instanceof Player)) {
-                    sender.sendMessage(data.prefix + "§4Only players can use this command!");
-                    return true;
-                }
-                Player player = (Player) sender;
-                if(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-                    kickText = PlaceholderAPI.setPlaceholders(player, kickText);
-                }
-
-                if(data.players.contains(player.getUniqueId().toString())) {
-                    BookRules.debug("Player " + player.getName() + " did accept the rules (is registered in players.txt), removing entry, caused by player.");
-                    data.players.remove(player.getUniqueId().toString());
-                }else {
-                    BookRules.debug("Player " + player.getName() + " didn't accept the rules (isn't registered in players.txt).");
-                }
-                BookRules.debug("Kicking player " + player.getName() + " for declining the rules.");
-                player.kickPlayer(kickText);
-            }else {
-                message = "";
-                if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload") || sender.hasPermission("bookrules.declinerules")) {
-                    message = message + "§7[§cBookRules§7] §cCommands:\n";
+            switch (args[0].toLowerCase()) {
+                case "reload":
                     if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) {
-                        message = message + "§c/bookrules reload §7- reload the config\n";
-                    }
-                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.status")) {
-                        message = message + "§c/bookrules status [player] §7- check the status of a sender\n\n";
-                    }
+                        //sender has permission to reload the plugin via the /bookrules command
+                        if(bookRules.instantiateConfig()) {
+                            rulesAPI.reloadPlayerData();
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_RELOAD_SUCCESSFUL, sender);
+                        }else messageManager.sendMessage(MessageManager.MessageType.MESSAGE_RELOAD_FAILED, sender);
+                    }else
+                        messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
+                    break;
+                case "acceptrules":
                     if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.acceptrules")) {
-                        message = message + "§c/bookrules acceptrules [player] §7- accept the rules for a sender\n";
-                    }
+                        //player has permission to accept rules via /bookrules command, DOES NOT specify a player
+                        if(!(sender instanceof Player)) {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PLAYER, sender);
+                            return true;
+                        }
+                        Player player = (Player) sender;
+                        if(rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString())) {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_ALREADY_ACCEPTED, player);
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
+                        }else {
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTING, player.getName());
+                            rulesAPI.acceptRules(player.getUniqueId().toString());
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_ACCEPT_RULES, player);
+                            player.getOpenInventory().close();
+                        }
+                    }else
+                        messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
+                    break;
+                case "declinerules":
                     if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) {
-                        message = message + "§c/bookrules declinerules [player] §7- decline the rules for a sender\n";
-                    }
-                }else message = data.prefix + data.noPermission;
+                        //player has permission to decline rules via the /bookrules command, DOES NOT specify a player
+                        if(!(sender instanceof Player)) {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PLAYER, sender);
+                            return true;
+                        }
+                        Player player = (Player) sender;
+                        if(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+                            kickText = PlaceholderAPI.setPlaceholders(player, kickText);
+                        }
 
-                sender.sendMessage(message);
+                        if(rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString())) {
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINING, player.getName());
+                            rulesAPI.declineRules(player.getUniqueId().toString());
+                        }else {
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
+                        }
+                        messageManager.sendDebug(MessageManager.DebugType.DEBUG_KICK, player.getName());
+                        player.kickPlayer(kickText);
+                    }else
+                        messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
+                    break;
+                case "status":
+                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("boookrules.status")) {
+                        //sender has permission to see the status of a player
+                        if(!(sender instanceof Player)) {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PLAYER, sender);
+                            return true;
+                        }
+                        Player player = (Player) sender;
+                        if(rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString())) {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_STATUS_ACCEPTED, player);
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
+                        }else {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_STATUS_DECLINED, player);
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
+                        }
+                    }else
+                        messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
+                    break;
+                default:
+                    String message = "";
+                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload") || sender.hasPermission("bookrules.declinerules")) {
+                        message = message + "§7[§cBookRules§7] §cCommands:\n";
+                        if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) {
+                            message = message + "§c/bookrules reload §7- reload the config\n";
+                        }
+                        if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.status")) {
+                            message = message + "§c/bookrules status [player] §7- check the status of a player\n";
+                        }
+                        if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.acceptrules")) {
+                            message = message + "§c/bookrules acceptrules [player] §7- accept the rules for a player\n";
+                        }
+                        if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) {
+                            message = message + "§c/bookrules declinerules [player] §7- decline the rules for a player\n";
+                        }
+                    }else message = messageManager.prefix + messageManager.noPermission;
+                    messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_NO_PREFIX, message, sender);
+                    break;
             }
         }else if(args.length == 2) {
             Player target;
             OfflinePlayer offlinePlayer;
-            if((sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) && args[0].equals("declinerules")) {
-                offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
-                if(data.players.contains(offlinePlayer.getUniqueId().toString())) {
-                    data.players.remove(offlinePlayer.getUniqueId().toString());
-                    sender.sendMessage("§7[§cBookRules§7] Successfully removed the §caccepted §7status from the player §c" + offlinePlayer.getName() + "§c.");
-                    target = Bukkit.getPlayer(offlinePlayer.getUniqueId());
-                    if(target != null) {
-                        if(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-                            kickText = PlaceholderAPI.setPlaceholders(target, kickText);
-                        }
-                        sender.sendMessage("§7[§cBookRules§7] The player §c" + target.getName() + " §7is online, kicking.");
-                        target.kickPlayer(kickText);
-                    }
-                }else {
-                    sender.sendMessage("§7[§cBookRules§7] The player §c" + offlinePlayer.getName() + " §7didn't accept the rules!");
-                }
-            }else if((sender.hasPermission("bookrules.commands") || sender.hasPermission("boookrules.acceptrules")) && args[0].equals("acceptrules")) {
-                offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
-                if(data.players.contains(offlinePlayer.getUniqueId().toString())) {
-                    sender.sendMessage("§7[§cBookRules§7] §7The player §c" + offlinePlayer.getName() + " §7already accepted the rules.");
-                    BookRules.debug("Player " + offlinePlayer.getName() + " did accept the rules (is registered in players.txt), passing, no action taken.");
-                }else {
-                    BookRules.debug("Player " + offlinePlayer.getName() + " didn't accept the rules (isn't registered in players.txt).");
-                    BookRules.debug("Registering player " + offlinePlayer.getName() + " in players.txt (player accepted the rules). (Player " + sender.getName() + " added accepted status)");
-                    data.players.add(offlinePlayer.getUniqueId().toString());
-                    sender.sendMessage("§7[§cBookRules§7] You sucessfully set the status from the player §c" + offlinePlayer.getName() + " §7to §caccepted.");
-                    target = Bukkit.getPlayer(offlinePlayer.getUniqueId());
-                    if(target != null) {
-                        target.getOpenInventory().close();
-                    }
-                }
-            }else if((sender.hasPermission("bookrules.commands") || sender.hasPermission("boookrules.status")) && args[0].equals("status")) {
-                offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
-                if(data.players.contains(offlinePlayer.getUniqueId().toString())) {
-                    sender.sendMessage("§7[§cBookRules§7] §7The player §c" + offlinePlayer.getName() + " §7accepted the rules.");
-                    BookRules.debug("Player " + offlinePlayer.getName() + " did accept the rules (is registered in players.txt).");
-                }else {
-                    sender.sendMessage("§7[§cBookRules§7] §7The player §c" + offlinePlayer.getName() + " §7didn't accept the rules or declined them.");
-                    BookRules.debug("Player " + offlinePlayer.getName() + " didn't accept the rules (isn't registered in players.txt).");
-                }
-            }else {
-                message = "";
-                if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload") || sender.hasPermission("bookrules.acceptrules") || sender.hasPermission("bookrules.declinerules")) {
-                    message = message + "§7[§cBookRules§7] §cCommands:\n";
-                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) {
-                        message = message + "§c/bookrules reload §7- reload the config\n";
-                    }
-                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.status")) {
-                        message = message + "§c/bookrules status [player] §7- check the status of a player\n";
-                    }
-                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.acceptrules")) {
-                        message = message + "§c/bookrules acceptrules [player] §7- accept the rules for a player\n";
-                    }
+
+            switch (args[0].toLowerCase()) {
+                case "declinerules":
                     if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) {
-                        message = message + "§c/bookrules declinerules [player] §7- decline the rules for a player\n";
-                    }
-                }else message = data.prefix + data.noPermission;
-                sender.sendMessage(message);
+                        //sender has permission to decline the rules via the /bookrules command, DOES specify a player
+                        offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
+                        if(rulesAPI.playerHasAcceptedRules(offlinePlayer.getUniqueId().toString())) {
+                            rulesAPI.declineRules(offlinePlayer.getUniqueId().toString());
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_REMOVE_ACCEPTED_STATUS, offlinePlayer.getName(), sender);
+                            target = Bukkit.getPlayer(offlinePlayer.getUniqueId());
+                            if(target != null) {
+                                if(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+                                    kickText = PlaceholderAPI.setPlaceholders(target, kickText);
+                                }
+                                messageManager.sendMessage(MessageManager.MessageType.MESSAGE_REMOVE_ACCEPTED_KICK, target.getName(), sender);
+                                target.kickPlayer(kickText);
+                            }
+                        }else {
+                            sender.sendMessage("§7[§cBookRules§7] The player §c" + offlinePlayer.getName() + " §7didn't accept the rules!");
+                        }
+                    }else
+                        messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
+                    break;
+                case "acceptrules":
+                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("boookrules.acceptrules")) {
+                        //sender has permission to accept the rules via the /bookrules command, DOES specify a player
+                        offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
+                        if(rulesAPI.playerHasAcceptedRules(offlinePlayer.getUniqueId().toString())) {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_PLAYER_ALREADY_ACCEPTED, offlinePlayer.getName(), sender);
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, offlinePlayer.getName());
+                        }else {
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, offlinePlayer.getName());
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTING, offlinePlayer.getName());
+                            rulesAPI.acceptRules(offlinePlayer.getUniqueId().toString());
+                            sender.sendMessage("§7[§cBookRules§7] You sucessfully set the status from the player §c" + offlinePlayer.getName() + " §7to §caccepted.");
+                            target = Bukkit.getPlayer(offlinePlayer.getUniqueId());
+                            if(target != null) {
+                                target.getOpenInventory().close();
+                            }
+                        }
+                    }else
+                        messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
+                    break;
+                case "status":
+                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.status")) {
+                        //sender has permission to see the status of a player
+                        offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
+                        if (rulesAPI.playerHasAcceptedRules(offlinePlayer.getUniqueId().toString())) {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_PLAYER_STATUS_ACCEPTED, offlinePlayer.getName(), sender);
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, offlinePlayer.getName());
+                        } else {
+                            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_PLAYER_STATUS_DECLINED, offlinePlayer.getName(), sender);
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, offlinePlayer.getName());
+                        }
+                    }else
+                        messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
+                    break;
+                default:
+                    String message = "";
+                    if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload") || sender.hasPermission("bookrules.acceptrules") || sender.hasPermission("bookrules.declinerules")) {
+                        message = message + "§7[§cBookRules§7] §cCommands:\n";
+                        if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) {
+                            message = message + "§c/bookrules reload §7- reload the config\n";
+                        }
+                        if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.status")) {
+                            message = message + "§c/bookrules status [player] §7- check the status of a player\n";
+                        }
+                        if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.acceptrules")) {
+                            message = message + "§c/bookrules acceptrules [player] §7- accept the rules for a player\n";
+                        }
+                        if(sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) {
+                            message = message + "§c/bookrules declinerules [player] §7- decline the rules for a player\n";
+                        }
+                    }else message = messageManager.prefix + messageManager.noPermission;
+                    messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_NO_PREFIX, message, sender);
             }
         }
         return false;

@@ -1,40 +1,52 @@
 package de.skyslycer.bookrules.commands;
 
-import de.skyslycer.bookrules.BookRules;
-import de.skyslycer.bookrules.util.Data;
+import de.skyslycer.bookrules.core.MessageManager;
+import de.skyslycer.bookrules.core.PermissionManager;
+import de.skyslycer.bookrules.api.RulesAPI;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.Map;
+
 public class AcceptRulesCommand implements CommandExecutor {
 
-    Data data = BookRules.getInstance().getData();
+    RulesAPI rulesAPI = new RulesAPI();
+    MessageManager messageManager;
+    PermissionManager permissionManager;
+    Map<Player, Location> playerCache;
+
+    public void injectData(MessageManager messageManager, Map<Player, Location> playerCache, PermissionManager permissionManager) {
+        this.messageManager = messageManager;
+        this.permissionManager = permissionManager;
+        this.playerCache = playerCache;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(!(sender instanceof Player)) {
-            sender.sendMessage(data.prefix + "§4Only players can use this command!");
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PLAYER, sender);
             return true;
         }
         Player player = (Player) sender;
-        BookRules.debug("Player " + player.getName() + " clicked the decline button or ran the command '/acceptrules'");
-        if(data.usePermissions) {
-            if(!player.hasPermission("bookrules.rules")) {
-                player.sendMessage(data.prefix + data.noPermission);
-                BookRules.debug("Player " + player.getName() + " doesn't have permission (bookrules.accept), passing, no action taken.");
-                return true;
-            }
+        messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINING, player.getName());
+        if(!permissionManager.hasExtraPermission(player, "bookrules.accept")) {
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, player);
+            messageManager.sendDebug(MessageManager.DebugType.DEBUG_NO_PERMISSION, player.getName(), "bookrules.accept");
+            return true;
         }
-        if(data.players.contains(player.getUniqueId().toString())) {
-            player.sendMessage(data.prefix + data.alreadyAccepted);
-            BookRules.debug("Player " + player.getName() + " did accept the rules (is registered in players.txt), passing, no action taken.");
+
+        if(rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString())) {
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_ALREADY_ACCEPTED, player);
+            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
         }else {
-            BookRules.debug("Player " + player.getName() + " didn't accept the rules (isn't registered in players.txt).");
-            BookRules.debug("Registering player " + player.getName() + " in players.txt (player accepted the rules).");
-            data.players.add(player.getUniqueId().toString());
-            BookRules.getInstance().getPlayerCache().remove(player);
-            player.sendMessage(data.prefix + data.acceptRules);
+            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
+            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTING, player.getName());
+            rulesAPI.acceptRules(player.getUniqueId().toString());
+            playerCache.remove(player);
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_ACCEPT_RULES, player);
             player.getOpenInventory().close();
         }
         return false;
