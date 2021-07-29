@@ -1,8 +1,8 @@
 package de.skyslycer.bookrules.listener;
 
 import de.skyslycer.bookrules.BookRules;
-import de.skyslycer.bookrules.core.BookManager;
 import de.skyslycer.bookrules.api.RulesAPI;
+import de.skyslycer.bookrules.core.BookManager;
 import de.skyslycer.bookrules.core.MessageManager;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -30,16 +30,20 @@ public class JoinQuitListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoinEvent(PlayerJoinEvent event) {
-        if(event.getPlayer().isOp() && !bookRules.isLatestVersion) {
+        if (event.getPlayer().isOp() && !bookRules.isLatestVersion) {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§cYou are running an outdated version, please download a newer one at:§4 https://bit.ly/bookrules", event.getPlayer());
         }
-        if(event.getPlayer().isOp() && !bookRules.configFile.isSuccessful()) {
+
+        if (event.getPlayer().isOp() && !bookRules.configFile.isSuccessful()) {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§cYour config is not valid! Please check your console and solve the errors!", event.getPlayer());
         }
-        if(!rulesAPI.playerHasAcceptedRules(event.getPlayer().getUniqueId().toString())) {
-            bookManager.openBook(event.getPlayer(), "bookrules.onjoin", false);
-            playerCache.put(event.getPlayer(), event.getPlayer().getLocation());
-        }
+
+        rulesAPI.playerHasAcceptedRules(event.getPlayer().getUniqueId().toString()).thenAccept((hasAccepted) -> {
+            if (!hasAccepted) {
+                bookManager.openBook(event.getPlayer(), "bookrules.onjoin", false);
+                playerCache.put(event.getPlayer(), event.getPlayer().getLocation());
+            }
+        });
     }
 
     @EventHandler

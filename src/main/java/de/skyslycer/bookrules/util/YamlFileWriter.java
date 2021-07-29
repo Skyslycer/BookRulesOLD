@@ -3,7 +3,8 @@ package de.skyslycer.bookrules.util;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,11 +21,9 @@ public class YamlFileWriter {
         this.file = new File(filePath, fileName);
         this.directory = new File(filePath);
         try {
-            directory.mkdir();
-            file.createNewFile();
             this.yamlConfiguration = new YamlConfiguration();
             this.yamlConfiguration.load(this.file);
-        }catch (InvalidConfigurationException | IOException exception) {
+        } catch (InvalidConfigurationException | IOException exception) {
             exception.printStackTrace();
             successful = false;
         }
@@ -48,12 +47,12 @@ public class YamlFileWriter {
     }
 
     public boolean getBoolean(String valuePath) {
-        if(yamlConfiguration.getString(valuePath) == null) {
+        if (yamlConfiguration.getString(valuePath) == null) {
             return false;
         }
-        if(yamlConfiguration.getString(valuePath).equals("true")) {
+        if (yamlConfiguration.getString(valuePath).equals("true")) {
             return true;
-        }else return false;
+        } else return false;
     }
 
     public int getInt(String valuePath) {
@@ -73,15 +72,6 @@ public class YamlFileWriter {
         return (ArrayList<String>) yamlConfiguration.getList(valuePath);
     }
 
-    public HashMap<String, String> getHashMap(String valuePath) {
-        HashMap<String, String> getMap = new HashMap<>();
-        for (String key : yamlConfiguration.getConfigurationSection(valuePath).getKeys(false)) {
-            ((Map<String, String>) getMap).put(key, (String) yamlConfiguration.get(valuePath + "." + key));
-        }
-
-        return getMap;
-    }
-
     public Set<String> getKeys(String valuePath) {
         return yamlConfiguration.getConfigurationSection(valuePath).getKeys(false);
     }
@@ -89,7 +79,7 @@ public class YamlFileWriter {
     public YamlFileWriter save() {
         try {
             this.yamlConfiguration.save(this.file);
-        }catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return this;

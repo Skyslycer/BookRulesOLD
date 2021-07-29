@@ -1,7 +1,6 @@
 package de.skyslycer.bookrules;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.intellectualsites.http.EntityMapper;
 import com.intellectualsites.http.HttpClient;
@@ -17,7 +16,9 @@ import de.skyslycer.bookrules.core.MessageManager;
 import de.skyslycer.bookrules.core.PermissionManager;
 import de.skyslycer.bookrules.listener.BlockListener;
 import de.skyslycer.bookrules.listener.JoinQuitListener;
-import de.skyslycer.bookrules.util.*;
+import de.skyslycer.bookrules.util.MCVersion;
+import de.skyslycer.bookrules.util.StorageType;
+import de.skyslycer.bookrules.util.YamlFileWriter;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
@@ -28,6 +29,10 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.sql.DataSource;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,23 +47,17 @@ public final class BookRules extends JavaPlugin {
 
     public YamlFileWriter configFile;
     public boolean isConfigSuccessful;
-
-    double latestVersion;
-    double currentVersion = 2.0;
     public boolean isLatestVersion;
     public HttpClient httpClient;
-
     public DataSource dataSource;
-
     public ArrayList<String> players = new ArrayList<>();
-
     public StorageType storageType;
-
     public RulesAPI rulesAPI = new RulesAPI();
     public MessageManager messageManager = new MessageManager();
     public PermissionManager permissionManager = new PermissionManager();
     public DatabaseManager databaseManager = new DatabaseManager();
-
+    double latestVersion;
+    double currentVersion = 2.0;
     BookManager bookManager = new BookManager();
     AcceptRulesCommand acceptRulesCommand = new AcceptRulesCommand();
     BookRulesCommand bookRulesCommand = new BookRulesCommand();
@@ -66,6 +65,10 @@ public final class BookRules extends JavaPlugin {
     RuleBookCommand ruleBookCommand = new RuleBookCommand();
     BlockListener blockListener = new BlockListener();
     JoinQuitListener joinQuitListener = new JoinQuitListener();
+
+    public static BookRules getAPIData() {
+        return instance;
+    }
 
     @Override
     public void onEnable() {
@@ -88,14 +91,17 @@ public final class BookRules extends JavaPlugin {
         pluginManager.registerEvents(joinQuitListener, this);
         pluginManager.registerEvents(blockListener, this);
 
-        if(!configFile.isSuccessful()) {
+        if (!configFile.isSuccessful()) {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4Bookrules failed to load config! Please correct the errors!", Bukkit.getConsoleSender());
-        }else messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§aBookRules §7successfully loaded!", Bukkit.getConsoleSender());
-        if(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§aPlaceholderAPI §7successfully registered!", Bukkit.getConsoleSender());
-        }else messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4PlaceholderAPI §7couldn't be found! Placeholders are not supported!", Bukkit.getConsoleSender());
+        } else
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§aBookRules §7successfully loaded!", Bukkit.getConsoleSender());
 
-        if(MCVersion.getVersion().isOlderThan(MCVersion.v1_12_R1)) {
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§aPlaceholderAPI §7successfully registered!", Bukkit.getConsoleSender());
+        } else
+            messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4PlaceholderAPI §7couldn't be found! Placeholders are not supported!", Bukkit.getConsoleSender());
+
+        if (MCVersion.getVersion().isOlderThan(MCVersion.v1_12_R1)) {
             messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4You are running an unsupported version of minecraft! Do NOT expect working features/support!");
         }
     }
@@ -119,9 +125,9 @@ public final class BookRules extends JavaPlugin {
         metrics.addCustomChart(new SimplePie("latest_version", () -> String.valueOf(isLatestVersion)));
         metrics.addCustomChart(new AdvancedPie("storage_types", () -> {
             HashMap<String, Integer> values = new HashMap<>();
-            if(storageType == StorageType.LOCAL) {
+            if (storageType == StorageType.LOCAL) {
                 values.put("local", 1);
-            }else if(storageType == StorageType.MYSQL) {
+            } else if (storageType == StorageType.MYSQL) {
                 values.put("mysql", 1);
             }
             return values;
@@ -142,9 +148,9 @@ public final class BookRules extends JavaPlugin {
                     .onStatus(200, response -> {
                         messageManager.sendDebug("§aSuccessfully received version data.");
                         final JsonObject jsonObject = response.getResponseEntity(JsonObject.class);
-                        if(jsonObject.get("name") != null) {
+                        if (jsonObject.get("name") != null) {
                             latestVersion = Float.parseFloat(jsonObject.get("name").getAsString());
-                            if(latestVersion > currentVersion) {
+                            if (latestVersion > currentVersion) {
                                 isLatestVersion = false;
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_UNSUPPORTED_VERSION);
                             }
@@ -154,57 +160,75 @@ public final class BookRules extends JavaPlugin {
                     .onRemaining(response -> messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4ERROR: Got following status code: " + response.getStatusCode() + ". Please ensure you have a working internet connection or contact the developer."))
                     .onException(Throwable::printStackTrace)
                     .execute();
-        },20, 72000);
+        }, 20, 72000);
     }
 
     public void startThread() {
         for (Player all : Bukkit.getOnlinePlayers()) {
-            if(!rulesAPI.playerHasAcceptedRules(all.getUniqueId().toString())) {
-                playerCache.put(all, all.getLocation());
-            }
+            rulesAPI.playerHasAcceptedRules(all.getUniqueId().toString()).thenAccept((hasAccepted) -> {
+                if (!hasAccepted) playerCache.put(all, all.getLocation());
+            });
         }
+
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> playerCache.forEach((player, location) -> {
-            if(rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString())) {
-                playerCache.remove(player);
-            }else if (player.getLocation().distanceSquared(location) >= 0.1) {
-                player.teleport(location);
-                bookManager.openBook(player, "bookrules.onclose", false);
-            }
+            rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString()).thenAccept((hasAccepted) -> {
+                if (hasAccepted) {
+                    playerCache.remove(player);
+                    return;
+                }
+
+                if (player.getLocation().distanceSquared(location) >= 0.1) {
+                    player.teleport(location);
+                    bookManager.openBook(player, "bookrules.onclose", false);
+                }
+            });
         }), 0, 20);
     }
 
     public boolean instantiateConfig() {
+        Path configPath = Paths.get("plugins/", "BookRules/", "config.yml");
+
+        if (!Files.exists(configPath)) {
+            try {
+                Files.createDirectories(configPath.getParent());
+                Files.copy(this.getClassLoader().getResourceAsStream("config.yml"), configPath);
+            } catch (IOException exception) {
+                try {
+                    Files.createFile(configPath);
+                } catch (IOException anotherException) {
+                    anotherException.printStackTrace();
+                    return false;
+                }
+            }
+        }
+
         configFile = new YamlFileWriter("plugins//BookRules", "config.yml");
         isConfigSuccessful = configFile.isSuccessful();
-        if(configFile.isSuccessful()) {
+        if (configFile.isSuccessful()) {
             //messages
             messageManager.instantiateMessages(configFile);
             //extra permissions
             permissionManager.instantiatePermissions(configFile, messageManager);
             //storage method
-            if(configFile.getString("storage-method") != null) {
-                if(configFile.getString("storage-method").equalsIgnoreCase("mysql")) {
+            if (configFile.getString("storage-method") != null) {
+                if (configFile.getString("storage-method").equalsIgnoreCase("mysql")) {
                     storageType = StorageType.MYSQL;
-                }else storageType = StorageType.LOCAL;
-            }else configFile.setValue("storage-method", "local");
+                } else storageType = StorageType.LOCAL;
+            } else configFile.setValue("storage-method", "local");
             //mysql
             databaseManager.instantiateConfig(configFile);
             //content
             bookManager.instantiateContent(configFile);
             //starting mysql innit if enabled
-            if(storageType == StorageType.MYSQL) {
+            if (storageType == StorageType.MYSQL) {
                 try {
                     dataSource = databaseManager.initMySQLDataSource(messageManager, this);
+                    databaseManager.createTable(this, dataSource);
                 } catch (SQLException e) {
                     databaseManager.logSQLError(e);
                 }
-                databaseManager.createTable(this, dataSource);
             }
         }
         return isConfigSuccessful;
-    }
-
-    public static BookRules getAPIData() {
-        return instance;
     }
 }

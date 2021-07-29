@@ -2,6 +2,7 @@ package de.skyslycer.bookrules.util;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
 public class NMSUtils {
     public static void sendPacket(Player player, Object packet) {
         try {
@@ -12,6 +13,7 @@ public class NMSUtils {
             e.printStackTrace();
         }
     }
+
     public static Class<?> getNMSClass(String name) {
         String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         try {

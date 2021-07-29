@@ -1,8 +1,8 @@
 package de.skyslycer.bookrules.commands;
 
+import de.skyslycer.bookrules.api.RulesAPI;
 import de.skyslycer.bookrules.core.MessageManager;
 import de.skyslycer.bookrules.core.PermissionManager;
-import de.skyslycer.bookrules.api.RulesAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -43,15 +43,18 @@ public class DeclineRulesCommand implements CommandExecutor {
             kickText = PlaceholderAPI.setPlaceholders(player, kickText);
         }
 
-        if (rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString())) {
-            messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
-            rulesAPI.declineRules(player.getUniqueId().toString());
-        } else {
-            messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
-        }
+        rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString()).thenAccept((hasAccepted) -> {
+            if (hasAccepted) {
+                messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
+                rulesAPI.declineRules(player.getUniqueId().toString());
+            } else  {
+                messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
+            }
+        });
+
         messageManager.sendDebug(MessageManager.DebugType.DEBUG_KICK, player.getName());
         player.kickPlayer(kickText);
         return false;
     }
-    
+
 }

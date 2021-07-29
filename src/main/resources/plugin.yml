@@ -4,7 +4,7 @@ main: de.skyslycer.bookrules.BookRules
 api-version: 1.13
 prefix: BookRules
 author: Skyslycer
-softdepend: [PlaceholderAPI,ProtocolLib]
+softdepend: [ PlaceholderAPI,ProtocolLib ]
 
 commands:
   declinerules:

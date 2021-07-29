@@ -5,7 +5,11 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import de.skyslycer.bookrules.api.RulesAPI;
-import de.skyslycer.bookrules.util.*;
+import de.skyslycer.bookrules.util.MCVersion;
+import de.skyslycer.bookrules.util.NMSUtils;
+import de.skyslycer.bookrules.util.YamlFileWriter;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -18,8 +22,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import org.bukkit.inventory.meta.BookMeta;
 
 import java.lang.reflect.Constructor;
@@ -28,15 +30,16 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BookManager {
-    MessageManager messageManager;
-    PermissionManager permissionManager;
-    RulesAPI rulesAPI = new RulesAPI();
-
     public ArrayList<String> bookContent = new ArrayList<>();
     public ArrayList<String> rawBookContent;
     public String acceptText;
     public String acceptButton;
     public String declineButton;
+
+    MessageManager messageManager;
+    PermissionManager permissionManager;
+
+    RulesAPI rulesAPI = new RulesAPI();
 
     public void injectData(MessageManager messageManager, PermissionManager permissionManager) {
         this.messageManager = messageManager;
@@ -44,14 +47,14 @@ public class BookManager {
     }
 
     public void instantiateContent(YamlFileWriter configFile) {
-        if(configFile.getString("accept-button") == null) {
+        if (configFile.getString("accept-button") == null) {
             configFile.setValue("accept-button", "&a[ACCEPT]");
         }
         acceptButton = configFile.getString("accept-button");
         messageManager.sendDebug("Accept button: " + acceptButton);
         acceptButton = ChatColor.translateAlternateColorCodes('&', acceptButton);
 
-        if(configFile.getString("decline-button") == null) {
+        if (configFile.getString("decline-button") == null) {
             configFile.setValue("decline-button", "&4[DECLINE]");
         }
         declineButton = configFile.getString("decline-button");
@@ -107,107 +110,117 @@ public class BookManager {
     }
 
     public void openBook(Player player, String permission, boolean command) {
+        if (command) {
+            open(player, permission);
+        } else {
+            rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString()).thenAccept((hasAccepted) -> {
+                if (hasAccepted) {
+                    messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
+                } else open(player, permission);
+            });
+        }
+    }
+
+    public void open(Player player, String permission) {
         ArrayList<String> bookContent = this.bookContent;
         ArrayList<BaseComponent[]> customBookContent = new ArrayList<>();
         String acceptText = this.acceptText;
 
-        if(!rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString()) || command) {
-            if (!permissionManager.hasExtraPermission(player, permission)) {
-                messageManager.sendDebug(MessageManager.DebugType.DEBUG_NO_PERMISSION, player.getName(), permission);
+        if (!permissionManager.hasExtraPermission(player, permission)) {
+            messageManager.sendDebug(MessageManager.DebugType.DEBUG_NO_PERMISSION, player.getName(), permission);
+            return;
+        }
+
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        BookMeta bookMeta = (BookMeta) book.getItemMeta();
+
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            acceptText = PlaceholderAPI.setPlaceholders(player, acceptText);
+            for (int i = 0; i < bookContent.size(); i++) {
+                String tempText = PlaceholderAPI.setPlaceholders(player, bookContent.get(i));
+                bookContent.set(i, tempText);
+            }
+        }
+
+        for (String page : bookContent) {
+            Component component = MiniMessage.get().parse(page);
+            customBookContent.add(BungeeComponentSerializer.get().serialize(component));
+        }
+
+        List<Template> templates = Arrays.asList(
+                Template.of("acceptbutton", Component.text(acceptButton).clickEvent(
+                        ClickEvent.runCommand("/acceptrules"))),
+                Template.of("declinebutton", Component.text(declineButton).clickEvent(
+                        ClickEvent.runCommand("/declinerules")))
+        );
+
+        Component component = MiniMessage.get().parse(acceptText, templates);
+        BaseComponent[] acceptTextComponent = BungeeComponentSerializer.get().serialize(component);
+
+        for (BaseComponent[] bookContentComponent : customBookContent) {
+            bookMeta.spigot().addPage(bookContentComponent);
+        }
+
+        messageManager.sendDebug("Opening book to the player " + player.getName() + ".");
+
+        bookMeta.spigot().addPage(acceptTextComponent);
+        bookMeta.setTitle("BookRules");
+        bookMeta.setAuthor("Server");
+        book.setItemMeta(bookMeta);
+
+        if (MCVersion.getVersion().isNewerThan(MCVersion.v1_12_R1)) {
+            if (MCVersion.getVersion().isNewerThan(MCVersion.v1_13_R2)) {
+                player.openBook(book);
                 return;
             }
 
-            ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
-            BookMeta bookMeta = (BookMeta) book.getItemMeta();
+            int slot = player.getInventory().getHeldItemSlot();
+            ItemStack old = player.getInventory().getItem(slot);
+            player.getInventory().setItem(slot, book);
 
-            if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-                acceptText = PlaceholderAPI.setPlaceholders(player, acceptText);
-                for (int i = 0; i < bookContent.size(); i++) {
-                    String tempText = PlaceholderAPI.setPlaceholders(player, bookContent.get(i));
-                    bookContent.set(i, tempText);
-                }
+            ByteBuf buf = Unpooled.buffer(256);
+            buf.setByte(0, (byte) 0);
+            buf.writerIndex(1);
+
+            try {
+                Constructor<?> serializerConstructor = NMSUtils.getNMSClass("PacketDataSerializer").getConstructor(ByteBuf.class);
+                Object packetDataSerializer = serializerConstructor.newInstance(buf);
+
+                Constructor<?> keyConstructor = NMSUtils.getNMSClass("MinecraftKey").getConstructor(String.class);
+                Object bookKey = keyConstructor.newInstance("minecraft:book_open");
+
+                Constructor<?> titleConstructor = NMSUtils.getNMSClass("PacketPlayOutCustomPayload").getConstructor(bookKey.getClass(), NMSUtils.getNMSClass("PacketDataSerializer"));
+                Object payload = titleConstructor.newInstance(bookKey, packetDataSerializer);
+
+                NMSUtils.sendPacket(player, payload);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            for (String page : bookContent) {
-                Component component = MiniMessage.get().parse(page);
-                customBookContent.add(BungeeComponentSerializer.get().serialize(component));
+            player.getInventory().setItem(slot, old);
+        } else {
+            if (MCVersion.getVersion().isOlderThan(MCVersion.v1_12_R1)) {
+                Bukkit.getLogger().warning("§4You are running an unsupported version! Don't expect support/working features!");
             }
 
-            List<Template> templates = Arrays.asList(
-                    Template.of("acceptbutton", Component.text(acceptButton).clickEvent(
-                            ClickEvent.runCommand("/acceptrules"))),
-                    Template.of("declinebutton", Component.text(declineButton).clickEvent(
-                            ClickEvent.runCommand("/declinerules")))
-            );
+            int slot = player.getInventory().getHeldItemSlot();
+            ItemStack old = player.getInventory().getItem(slot);
+            player.getInventory().setItem(slot, book);
 
-            Component component = MiniMessage.get().parse(acceptText, templates);
-            BaseComponent[] acceptTextComponent = BungeeComponentSerializer.get().serialize(component);
-
-            for (BaseComponent[] bookContentComponent : customBookContent) {
-                bookMeta.spigot().addPage(bookContentComponent);
+            try {
+                PacketContainer pc = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.CUSTOM_PAYLOAD);
+                pc.getModifier().writeDefaults();
+                ByteBuf bf = Unpooled.buffer(256);
+                bf.setByte(0, 0);
+                bf.writerIndex(1);
+                pc.getStrings().write(0, "MC|BOpen");
+                pc.getModifier().write(1, MinecraftReflection.getPacketDataSerializer(bf));
+                ProtocolLibrary.getProtocolManager().sendServerPacket(player, pc);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            messageManager.sendDebug("Opening book to the player " + player.getName() + ".");
-
-            bookMeta.spigot().addPage(acceptTextComponent);
-            bookMeta.setTitle("BookRules");
-            bookMeta.setAuthor("Server");
-            book.setItemMeta(bookMeta);
-
-            if(MCVersion.getVersion().isNewerThan(MCVersion.v1_12_R1)) {
-                if (MCVersion.getVersion().isNewerThan(MCVersion.v1_13_R2)) {
-                    player.openBook(book);
-                    return;
-                }
-
-                int slot = player.getInventory().getHeldItemSlot();
-                ItemStack old = player.getInventory().getItem(slot);
-                player.getInventory().setItem(slot, book);
-
-                ByteBuf buf = Unpooled.buffer(256);
-                buf.setByte(0, (byte)0);
-                buf.writerIndex(1);
-
-                try {
-                    Constructor<?> serializerConstructor = NMSUtils.getNMSClass("PacketDataSerializer").getConstructor(ByteBuf.class);
-                    Object packetDataSerializer = serializerConstructor.newInstance(buf);
-
-                    Constructor<?> keyConstructor = NMSUtils.getNMSClass("MinecraftKey").getConstructor(String.class);
-                    Object bookKey = keyConstructor.newInstance("minecraft:book_open");
-
-                    Constructor<?> titleConstructor = NMSUtils.getNMSClass("PacketPlayOutCustomPayload").getConstructor(bookKey.getClass(), NMSUtils.getNMSClass("PacketDataSerializer"));
-                    Object payload = titleConstructor.newInstance(bookKey, packetDataSerializer);
-
-                    NMSUtils.sendPacket(player, payload);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                player.getInventory().setItem(slot, old);
-            } else {
-                if (MCVersion.getVersion().isOlderThan(MCVersion.v1_12_R1)) {
-                    Bukkit.getLogger().warning("§4You are running an unsupported version! Don't expect support/working features!");
-                }
-
-                int slot = player.getInventory().getHeldItemSlot();
-                ItemStack old = player.getInventory().getItem(slot);
-                player.getInventory().setItem(slot, book);
-
-                try {
-                    PacketContainer pc = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.CUSTOM_PAYLOAD);
-                    pc.getModifier().writeDefaults();
-                    ByteBuf bf = Unpooled.buffer(256);
-                    bf.setByte(0, 0);
-                    bf.writerIndex(1);
-                    pc.getStrings().write(0, "MC|BOpen");
-                    pc.getModifier().write(1, MinecraftReflection.getPacketDataSerializer(bf));
-                    ProtocolLibrary.getProtocolManager().sendServerPacket(player, pc);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                player.getInventory().setItem(slot, old);
-            }
-        }else messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
+            player.getInventory().setItem(slot, old);
+        }
     }
 }

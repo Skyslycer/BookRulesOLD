@@ -1,7 +1,8 @@
 package de.skyslycer.bookrules.listener;
 
-import de.skyslycer.bookrules.core.BookManager;
 import de.skyslycer.bookrules.api.RulesAPI;
+import de.skyslycer.bookrules.core.BookManager;
+import de.skyslycer.bookrules.core.MessageManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -18,17 +19,21 @@ public class BlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onBlockBreakEvent(BlockBreakEvent event) {
-        if(!rulesAPI.playerHasAcceptedRules(event.getPlayer().getUniqueId().toString())) {
-            event.setCancelled(true);
-            bookManager.openBook(event.getPlayer(), "bookrules.onclose", false);
-        }
+        rulesAPI.playerHasAcceptedRules(event.getPlayer().getUniqueId().toString()).thenAccept((hasAccepted) -> {
+            if (!hasAccepted) {
+                event.setCancelled(true);
+                bookManager.openBook(event.getPlayer(), "bookrules.onclose", false);
+            }
+        });
     }
 
     @EventHandler(priority = EventPriority.LOW)
     public void onBlockPlaceEvent(BlockPlaceEvent event) {
-        if(!rulesAPI.playerHasAcceptedRules(event.getPlayer().getUniqueId().toString())) {
-            event.setCancelled(true);
-            bookManager.openBook(event.getPlayer(), "bookrules.onclose", false);
-        }
+        rulesAPI.playerHasAcceptedRules(event.getPlayer().getUniqueId().toString()).thenAccept((hasAccepted) -> {
+            if (!hasAccepted) {
+                event.setCancelled(true);
+                bookManager.openBook(event.getPlayer(), "bookrules.onclose", false);
+            }
+        });
     }
 }

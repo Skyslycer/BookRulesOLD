@@ -3,7 +3,6 @@ package de.skyslycer.bookrules.core;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import de.skyslycer.bookrules.BookRules;
-import de.skyslycer.bookrules.core.MessageManager;
 import de.skyslycer.bookrules.util.YamlFileWriter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -12,7 +11,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.logging.Level;
 
 public class DatabaseManager {
     public String host;
@@ -25,29 +23,29 @@ public class DatabaseManager {
     MessageManager messageManager;
 
     public void instantiateConfig(YamlFileWriter configFile) {
-        if(configFile.getString("mysql.host") == null) {
+        if (configFile.getString("mysql.host") == null) {
             configFile.setValue("mysql.host", "localhost");
-        }else host = configFile.getString("mysql.host");
+        } else host = configFile.getString("mysql.host");
 
-        if(configFile.getString("mysql.port") == null) {
+        if (configFile.getString("mysql.port") == null) {
             configFile.setValue("mysql.port", 3306);
-        }else port = configFile.getInt("mysql.port");
+        } else port = configFile.getInt("mysql.port");
 
-        if(configFile.getString("mysql.username") == null) {
+        if (configFile.getString("mysql.username") == null) {
             configFile.setValue("mysql.username", "root");
-        }else username = configFile.getString("mysql.username");
+        } else username = configFile.getString("mysql.username");
 
-        if(configFile.getString("mysql.password") == null) {
+        if (configFile.getString("mysql.password") == null) {
             configFile.setValue("mysql.password", "supersecurepassword");
-        }else password = configFile.getString("mysql.password");
+        } else password = configFile.getString("mysql.password");
 
-        if(configFile.getString("mysql.database") == null) {
+        if (configFile.getString("mysql.database") == null) {
             configFile.setValue("mysql.database", "bookrules");
-        }else database = configFile.getString("mysql.database");
+        } else database = configFile.getString("mysql.database");
 
-        if(configFile.getString("mysql.prefix") == null) {
+        if (configFile.getString("mysql.prefix") == null) {
             configFile.setValue("mysql.prefix", "localhost");
-        }else databasePrefix = configFile.getString("mysql.prefix");
+        } else databasePrefix = configFile.getString("mysql.prefix");
 
         host = configFile.getString("mysql.host");
         port = configFile.getInt("mysql.port");
@@ -76,10 +74,10 @@ public class DatabaseManager {
         try (Connection conn = dataSource.getConnection()) {
             if (!conn.isValid(1000)) {
                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4Could not connect to database! Please check your database/credentials.");
-                for(Player all : Bukkit.getOnlinePlayers()) {
-                    if(all.isOp()) {
+                for (Player all : Bukkit.getOnlinePlayers()) {
+                    if (all.isOp()) {
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4Could not connect to database! Please check your database/credentials.", all);
-                    }else
+                    } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4The MySQL connection for the BookRules plugin failed, please contact an administrator!\n§7In case you have access to the server, please check your console and fix the errors!", all);
                 }
             }
@@ -103,12 +101,13 @@ public class DatabaseManager {
     }
 
     public void logSQLError(SQLException ex) {
-        messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN,"§4An error occurred while executing an SQL statement:\n" + ex);
+        messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4An error occurred while executing an SQL statement:\n" + ex);
         ex.printStackTrace();
-        for(Player all : Bukkit.getOnlinePlayers()) {
-            if(all.isOp()) {
+        for (Player all : Bukkit.getOnlinePlayers()) {
+            if (all.isOp() || all.hasPermission("bookrules.reload") || all.hasPermission("bookrules.commands") || all.hasPermission("*")) {
                 messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4The MySQL connection generated an exception! \nPlease check your console!", all);
-            }else messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4The MySQL connection for the BookRules plugin failed, please contact an administrator!\n§7In case you have access to the server, please check your console and fix the errors!", all);
+            } else
+                messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4The MySQL connection for the BookRules plugin failed, please contact an administrator!\n§7In case you have access to the server, please check your console and fix the errors!", all);
         }
     }
 }

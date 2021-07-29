@@ -8,7 +8,7 @@ public class PermissionManager {
     public boolean extraPermissions;
 
     public void instantiatePermissions(YamlFileWriter configFile, MessageManager messageManager) {
-        if(configFile.getString("use-permissions") == null) {
+        if (configFile.getString("use-permissions") == null) {
             configFile.setValue("use-permissions", false);
         }
         extraPermissions = configFile.getBoolean("use-permissions");
@@ -16,14 +16,10 @@ public class PermissionManager {
     }
 
     public boolean hasExtraPermission(CommandSender sender, String permission) {
-        if(sender.hasPermission(permission) || !extraPermissions) {
-            return true;
-        }else return false;
+        return sender.hasPermission(permission) || !extraPermissions;
     }
 
     public boolean hasExtraPermission(Player player, String permission) {
-        if(player.hasPermission(permission) || !extraPermissions) {
-            return true;
-        }else return false;
+        return player.hasPermission(permission) || !extraPermissions;
     }
 }

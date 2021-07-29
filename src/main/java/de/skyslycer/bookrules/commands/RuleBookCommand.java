@@ -21,15 +21,15 @@ public class RuleBookCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(!(sender instanceof Player)) {
+        if (!(sender instanceof Player)) {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PLAYER, sender);
             return false;
         }
 
-        if(permissionManager.hasExtraPermission(sender, "bookrules.openbook")) {
+        if (permissionManager.hasExtraPermission(sender, "bookrules.openbook")) {
             bookManager.openBook((Player) sender, "bookrules.openbook", true);
-        }else messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
+        } else messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
         return true;
     }
-    
+
 }

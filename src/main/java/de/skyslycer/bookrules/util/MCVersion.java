@@ -30,6 +30,20 @@ public enum MCVersion {
         this.majorId = majorId;
     }
 
+    public static MCVersion getVersion() {
+        if (version != null) return version;
+        String name = Bukkit.getServer().getClass().getPackage().getName();
+        String versionPackage = name.substring(name.lastIndexOf('.') + 1) + ".";
+        for (MCVersion version : values()) {
+            if (versionPackage.contains(version.toString())) {
+                MCVersion.version = version;
+                return version;
+            }
+        }
+        version = vUNKNOWN;
+        return MCVersion.vUNKNOWN;
+    }
+
     public boolean isNewerThan(MCVersion version) {
         return this.id > version.id;
     }
@@ -68,19 +82,5 @@ public enum MCVersion {
 
     public boolean isMajorBetween(int major1, int major2) {
         return major1 <= majorId && majorId <= major2;
-    }
-
-    public static MCVersion getVersion() {
-        if (version != null) return version;
-        String name = Bukkit.getServer().getClass().getPackage().getName();
-        String versionPackage = name.substring(name.lastIndexOf('.') + 1) + ".";
-        for (MCVersion version : values()) {
-            if (versionPackage.contains(version.toString())) {
-                MCVersion.version = version;
-                return version;
-            }
-        }
-        version = vUNKNOWN;
-        return MCVersion.vUNKNOWN;
     }
 }
