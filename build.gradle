@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'de.skyslycer'
-version = '1.6-SNAPSHOT'
+version = '2.0'
 
 sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
@@ -26,8 +26,8 @@ repositories {
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
     compileOnly 'me.clip:placeholderapi:2.10.9'
-    compileOnly group: "com.comphenix.protocol", name: "ProtocolLib", version: "4.6.0";
-    compileOnly group: 'io.netty', name: 'netty-all', version: '4.1.24.Final';
+    compileOnly group: "com.comphenix.protocol", name: "ProtocolLib", version: "4.6.0"
+    compileOnly group: 'io.netty', name: 'netty-all', version: '4.1.24.Final'
     implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.24'
     implementation 'net.kyori:adventure-text-minimessage:4.1.0-SNAPSHOT'
     implementation 'net.kyori:adventure-text-serializer-bungeecord:4.0.0-SNAPSHOT'

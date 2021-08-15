@@ -186,7 +186,7 @@ public final class BookRules extends JavaPlugin {
     }
 
     public boolean instantiateConfig() {
-        Path configPath = Paths.get("plugins/", "BookRules/", "config.yml");
+        Path configPath = Paths.get(getDataFolder().toString(), "config.yml");
 
         if (!Files.exists(configPath)) {
             try {

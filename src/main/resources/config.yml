@@ -1,0 +1,80 @@
+# ██████╗░░█████╗░░█████╗░██╗░░██╗██████╗░██╗░░░██╗██╗░░░░░███████╗░██████╗
+# ██╔══██╗██╔══██╗██╔══██╗██║░██╔╝██╔══██╗██║░░░██║██║░░░░░██╔════╝██╔════╝
+# ██████╦╝██║░░██║██║░░██║█████═╝░██████╔╝██║░░░██║██║░░░░░█████╗░░╚█████╗░
+# ██╔══██╗██║░░██║██║░░██║██╔═██╗░██╔══██╗██║░░░██║██║░░░░░██╔══╝░░░╚═══██╗
+# ██████╦╝╚█████╔╝╚█████╔╝██║░╚██╗██║░░██║╚██████╔╝███████╗███████╗██████╔╝
+# ╚═════╝░░╚════╝░░╚════╝░╚═╝░░╚═╝╚═╝░░╚═╝░╚═════╝░╚══════╝╚══════╝╚═════╝░
+# ░░░░░░░░░░░░░░░░░░░░░░ by Skyslycer -  v.2.0 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+# The prefix showing up on almost all player messages
+prefix: '&7[&cBookRules&7]'
+
+# The kick message when someone gets kicked, because he declined the rules
+kick-text: '&7In order to &aplay &7on the server, you need to &aagree &7to the rules!'
+
+# The message when someone aaccepts the rules
+accept-message: '&7You successfully &aaccepted &7the &arules.'
+
+# Message when some tries to accept the rules, but already did
+already-accepted-message: '&7You &calready accepted &7the &crules!'
+
+# The message, when someone doesn't have enough permission to do that
+no-permission: '&4You don''t have permission to run this command!'
+
+# Debug mode prints useful information for the developer
+debug-mode: false
+
+# This enables more permissions
+use-permissions: false
+
+# The storage method, either local or mysql
+storage-method: local
+
+# MySQL Settings
+mysql:
+  # The host for the MySQL server
+  host: localhost
+
+  # The port where MySQL runs
+  port: 3306
+
+  # Username and password to log in
+  username: root
+  password: supersecurepassword
+
+  # The database name
+  database: bookrules
+
+  # The prefix for tables
+  prefix: br_
+
+# The button replaced by <acceptbutton> (clickable)
+accept-button: '&a[ACCEPT]'
+
+# The button replaced by <declinebutton> (clickable)
+decline-button: '&4[DECLINE]'
+
+# The text on the last page. Use the 2 placeholders above for the buttons
+accept-text: "&7If you accept the &7rules, you agree to &7the rules and &7punishments for &7breaking them. If you &7decline, you will be &7kicked. \n\n<acceptbutton>  <declinebutton>"
+
+# The actual content of the book
+content:
+  # The page
+  '1':
+    # The contents of this page, configured as a list
+    - '&cIf you see this, please contact a server administrator or owner to configure
+    this plugin properly.'
+    - If you want to know how configure this plugin, please visit the plugin page. The
+      wiki is well documented and easy to understand.
+    - 'Plugin page: http://bit.ly/bookrules'
+  '2':
+    - 'Colorcode examples:'
+    - '&7[&61&7] &6Don''t grief!'
+    - '&7[&62&7] &6Don''t hack!'
+  '3':
+    - 'Minimessage examples:'
+    - <click:run_command:/say hello>Click</click> to say hello
+    - <hover:show_text:'<red>test'>TEST</hover>
+    - ' '
+    - If you need help configuring, go to the wiki!
+    - http://bit.ly/bookrules-wiki

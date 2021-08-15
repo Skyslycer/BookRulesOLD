@@ -44,7 +44,7 @@ public class DatabaseManager {
         } else database = configFile.getString("mysql.database");
 
         if (configFile.getString("mysql.prefix") == null) {
-            configFile.setValue("mysql.prefix", "localhost");
+            configFile.setValue("mysql.prefix", "br_");
         } else databasePrefix = configFile.getString("mysql.prefix");
 
         host = configFile.getString("mysql.host");

@@ -49,9 +49,11 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                     message = message + "§c/bookrules declinerules [player] §7- decline the rules for a player\n\n";
                 }
             }
+
             message = message + "§7Links:\n" +
                     "§cDiscord:§7 https://discord.gg/jTkfTDGr5c\n" +
                     "§cDownload:§7 http://bit.ly/bookrules";
+
             sender.sendMessage(message);
         } else if (args.length == 1) {
             switch (args[0].toLowerCase()) {
@@ -97,7 +99,9 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PLAYER, sender);
                             return true;
                         }
+
                         Player player = (Player) sender;
+
                         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
                             kickText = PlaceholderAPI.setPlaceholders(player, kickText);
                         }
@@ -146,12 +150,15 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                         if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) {
                             message = message + "§c/bookrules reload §7- reload the config\n";
                         }
+
                         if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.status")) {
                             message = message + "§c/bookrules status [player] §7- check the status of a player\n";
                         }
+
                         if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.acceptrules")) {
                             message = message + "§c/bookrules acceptrules [player] §7- accept the rules for a player\n";
                         }
+
                         if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) {
                             message = message + "§c/bookrules declinerules [player] §7- decline the rules for a player\n";
                         }
@@ -232,6 +239,7 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                     break;
                 default:
                     String message = "";
+
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload") || sender.hasPermission("bookrules.acceptrules") || sender.hasPermission("bookrules.declinerules")) {
                         message = message + "§7[§cBookRules§7] §cCommands:\n";
                         if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) {
