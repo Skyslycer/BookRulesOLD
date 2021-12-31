@@ -16,3 +16,23 @@ commands:
     aliases: br
   rulebook:
     description: Open the rulebook.
+
+permissions:
+  bookrules.commands:
+    description: 'all /bookrules reload, acceptrules, declinerules'
+  bookrules.reload:
+    description: '/bookrules reload'
+  bookrules.status:
+    description: '/bookrules status [player]'
+  bookrules.acceptrules:
+    description: '/bookrules acceptrules [player]'
+  bookrules.declinerules:
+    description: '/bookrules declinerules [player]'
+  bookrules.accept:
+    description: '/acceptrules (permission mode)'
+  bookrules.decline:
+    description: '/declinerules (permission mode)'
+  bookrules.rulebook:
+    description: '/rulebook (permission mode)'
+  bookrules.onjoin:
+    description: 'open the book when a player joins and didn''t accept the rules (permission mode)'

@@ -92,7 +92,7 @@ public class DatabaseManager {
             if (!conn.isValid(1000)) {
                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4Could not connect to database! Please check your database/credentials.");
                 for (Player all : Bukkit.getOnlinePlayers()) {
-                    if (all.isOp() || all.hasPermission("bookrules.admin")) {
+                    if (all.isOp() || all.hasPermission("bookrules.commands")) {
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4Could not connect to database! Please check your database/credentials.", all);
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4The MySQL connection for the BookRules plugin failed, please contact an administrator!\n§7In case you have access to the server, please check your console and fix the errors!", all);
