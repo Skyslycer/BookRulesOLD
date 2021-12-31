@@ -57,7 +57,7 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(message);
         } else if (args.length == 1) {
             switch (args[0].toLowerCase()) {
-                case "reload":
+                case "reload" -> {
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload")) {
                         //sender has permission to reload the plugin via the /bookrules command
                         if (bookRules.instantiateConfig()) {
@@ -66,8 +66,8 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                         } else messageManager.sendMessage(MessageManager.MessageType.MESSAGE_RELOAD_FAILED, sender);
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
-                    break;
-                case "acceptrules":
+                }
+                case "acceptrules" -> {
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.acceptrules")) {
                         //player has permission to accept rules via /bookrules command, DOES NOT specify a player
                         if (!(sender instanceof Player)) {
@@ -81,7 +81,7 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                             if (hasAccepted) {
                                 messageManager.sendMessage(MessageManager.MessageType.MESSAGE_ALREADY_ACCEPTED, player);
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
-                            } else  {
+                            } else {
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTING, player.getName());
                                 rulesAPI.acceptRules(player.getUniqueId().toString());
@@ -91,8 +91,8 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                         });
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
-                    break;
-                case "declinerules":
+                }
+                case "declinerules" -> {
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) {
                         //player has permission to decline rules via the /bookrules command, DOES NOT specify a player
                         if (!(sender instanceof Player)) {
@@ -111,7 +111,7 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINING, player.getName());
                                 rulesAPI.declineRules(player.getUniqueId().toString());
-                            } else  {
+                            } else {
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
                             }
                         });
@@ -120,8 +120,8 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                         player.kickPlayer(kickText);
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
-                    break;
-                case "status":
+                }
+                case "status" -> {
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("boookrules.status")) {
                         //sender has permission to see the status of a player
                         if (!(sender instanceof Player)) {
@@ -135,15 +135,15 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                             if (hasAccepted) {
                                 messageManager.sendMessage(MessageManager.MessageType.MESSAGE_STATUS_ACCEPTED, player);
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
-                            } else  {
+                            } else {
                                 messageManager.sendMessage(MessageManager.MessageType.MESSAGE_STATUS_DECLINED, player);
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
                             }
                         });
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
-                    break;
-                default:
+                }
+                default -> {
                     String message = "";
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload") || sender.hasPermission("bookrules.declinerules")) {
                         message = message + "§7[§cBookRules§7] §cCommands:\n";
@@ -164,13 +164,13 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                         }
                     } else message = messageManager.prefix + messageManager.noPermission;
                     messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_NO_PREFIX, message, sender);
-                    break;
+                }
             }
         } else if (args.length == 2) {
             OfflinePlayer offlinePlayer;
 
             switch (args[0].toLowerCase()) {
-                case "declinerules":
+                case "declinerules" -> {
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.declinerules")) {
                         //sender has permission to decline the rules via the /bookrules command, DOES specify a player
                         offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
@@ -188,14 +188,14 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                                     messageManager.sendMessage(MessageManager.MessageType.MESSAGE_REMOVE_ACCEPTED_KICK, target.getName(), sender);
                                     target.kickPlayer(kickText);
                                 }
-                            } else  {
+                            } else {
                                 sender.sendMessage("§7[§cBookRules§7] The player §c" + offlinePlayer.getName() + " §7didn't accept the rules!");
                             }
                         });
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
-                    break;
-                case "acceptrules":
+                }
+                case "acceptrules" -> {
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("boookrules.acceptrules")) {
                         //sender has permission to accept the rules via the /bookrules command, DOES specify a player
                         offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
@@ -206,7 +206,7 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                             if (hasAccepted) {
                                 messageManager.sendMessage(MessageManager.MessageType.MESSAGE_PLAYER_ALREADY_ACCEPTED, offlinePlayer.getName(), sender);
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, offlinePlayer.getName());
-                            } else  {
+                            } else {
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, offlinePlayer.getName());
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTING, offlinePlayer.getName());
                                 rulesAPI.acceptRules(offlinePlayer.getUniqueId().toString());
@@ -219,8 +219,8 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                         });
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
-                    break;
-                case "status":
+                }
+                case "status" -> {
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.status")) {
                         //sender has permission to see the status of a player
                         offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
@@ -229,15 +229,15 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                             if (hasAccepted) {
                                 messageManager.sendMessage(MessageManager.MessageType.MESSAGE_PLAYER_STATUS_ACCEPTED, offlinePlayer.getName(), sender);
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, offlinePlayer.getName());
-                            } else  {
+                            } else {
                                 messageManager.sendMessage(MessageManager.MessageType.MESSAGE_PLAYER_STATUS_DECLINED, offlinePlayer.getName(), sender);
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, offlinePlayer.getName());
                             }
                         });
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PERMISSION, sender);
-                    break;
-                default:
+                }
+                default -> {
                     String message = "";
 
                     if (sender.hasPermission("bookrules.commands") || sender.hasPermission("bookrules.reload") || sender.hasPermission("bookrules.acceptrules") || sender.hasPermission("bookrules.declinerules")) {
@@ -256,6 +256,7 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
                         }
                     } else message = messageManager.prefix + messageManager.noPermission;
                     messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_NO_PREFIX, message, sender);
+                }
             }
         }
         return false;

@@ -4,29 +4,31 @@ import org.bukkit.Bukkit;
 
 public enum MCVersion {
 
-    vUNKNOWN(-1, -1),
-    v1_8_R1(81, 8),
-    v1_8_R2(82, 8),
-    v1_8_R3(83, 8),
-    v1_9_R1(91, 9),
-    v1_9_R2(92, 9),
-    v1_10_R1(100, 10),
-    v1_11_R1(110, 11),
-    v1_12_R1(120, 12),
-    v1_13_R1(131, 13),
-    v1_13_R2(132, 13),
-    v1_14_R1(140, 14),
-    v1_15_R1(151, 15),
-    v1_16_R1(161, 16),
-    v1_16_R2(162, 16),
-    v1_16_R3(163, 16);
+    vUNKNOWN(-1),
+    v1_8_R1(8),
+    v1_8_R2(8),
+    v1_8_R3(8),
+    v1_9_R1(9),
+    v1_9_R2(9),
+    v1_10_R1(10),
+    v1_11_R1(11),
+    v1_12_R1(12),
+    v1_13_R1(13),
+    v1_13_R2(13),
+    v1_14_R1(14),
+    v1_15_R1(15),
+    v1_16_R1(16),
+    v1_16_R2(16),
+    v1_16_R3(16),
+    v1_17_R1(17),
+    v1_17_R2(17),
+    v1_18_R1(18),
+    v1_18_R2(18);
 
     private static MCVersion version;
-    private final int id;
     private final int majorId;
 
-    MCVersion(int id, int majorId) {
-        this.id = id;
+    MCVersion(int majorId) {
         this.majorId = majorId;
     }
 
@@ -44,24 +46,12 @@ public enum MCVersion {
         return MCVersion.vUNKNOWN;
     }
 
-    public boolean isNewerThan(MCVersion version) {
-        return this.id > version.id;
-    }
-
-    public boolean isOlderThan(MCVersion version) {
-        return this.id < version.id;
-    }
-
     public boolean isMajorNewerThan(int majorVersion) {
         return majorId > majorVersion;
     }
 
     public boolean isMajorOlderThan(int majorVersion) {
         return majorId < majorVersion;
-    }
-
-    public boolean isEqual(MCVersion version) {
-        return id == version.id;
     }
 
     public boolean isSameMajor(MCVersion version) {
@@ -77,7 +67,7 @@ public enum MCVersion {
     }
 
     public boolean isBetween(MCVersion version1, MCVersion version2) {
-        return version1.id <= id && id <= version2.id;
+        return version1.majorId <= majorId && majorId <= version2.majorId;
     }
 
     public boolean isMajorBetween(int major1, int major2) {

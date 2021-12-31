@@ -3,11 +3,13 @@ package de.skyslycer.bookrules.core;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import de.skyslycer.bookrules.BookRules;
-import de.skyslycer.bookrules.util.YamlFileWriter;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import javax.sql.DataSource;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -22,37 +24,52 @@ public class DatabaseManager {
 
     MessageManager messageManager;
 
-    public void instantiateConfig(YamlFileWriter configFile) {
+    public void injectData(MessageManager messageManager) {
+        this.messageManager = messageManager;
+    }
+
+    public void instantiateConfig(FileConfiguration configFile, Path configPath) {
         if (configFile.getString("mysql.host") == null) {
-            configFile.setValue("mysql.host", "localhost");
-        } else host = configFile.getString("mysql.host");
+            configFile.set("mysql.host", "localhost");
+        }
+        host = configFile.getString("mysql.host");
+        messageManager.sendDebug("MySQL host: " + host);
 
         if (configFile.getString("mysql.port") == null) {
-            configFile.setValue("mysql.port", 3306);
-        } else port = configFile.getInt("mysql.port");
+            configFile.set("mysql.port", 3306);
+        }
+        port = configFile.getInt("mysql.port");
+        messageManager.sendDebug("MySQL port: " + port);
 
         if (configFile.getString("mysql.username") == null) {
-            configFile.setValue("mysql.username", "root");
-        } else username = configFile.getString("mysql.username");
+            configFile.set("mysql.username", "root");
+        }
+        username = configFile.getString("mysql.username");
+        messageManager.sendDebug("MySQL username: " + username);
 
         if (configFile.getString("mysql.password") == null) {
-            configFile.setValue("mysql.password", "supersecurepassword");
-        } else password = configFile.getString("mysql.password");
+            configFile.set("mysql.password", "supersecurepassword");
+        }
+        password = configFile.getString("mysql.password");
+        messageManager.sendDebug("MySQL password: not showing in console");
 
         if (configFile.getString("mysql.database") == null) {
-            configFile.setValue("mysql.database", "bookrules");
-        } else database = configFile.getString("mysql.database");
+            configFile.set("mysql.database", "bookrules");
+        }
+        database = configFile.getString("mysql.database");
+        messageManager.sendDebug("MySQL database name: " + database);
 
         if (configFile.getString("mysql.prefix") == null) {
-            configFile.setValue("mysql.prefix", "br_");
-        } else databasePrefix = configFile.getString("mysql.prefix");
-
-        host = configFile.getString("mysql.host");
-        port = configFile.getInt("mysql.port");
-        username = configFile.getString("mysql.username");
-        password = configFile.getString("mysql.password");
-        database = configFile.getString("mysql.database");
+            configFile.set("mysql.prefix", "br_");
+        }
         databasePrefix = configFile.getString("mysql.prefix");
+        messageManager.sendDebug("MySQL table prefix: " + databasePrefix);
+
+        try {
+            configFile.save(configPath.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public DataSource initMySQLDataSource(MessageManager messageManager, BookRules plugin) throws SQLException {
@@ -75,7 +92,7 @@ public class DatabaseManager {
             if (!conn.isValid(1000)) {
                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4Could not connect to database! Please check your database/credentials.");
                 for (Player all : Bukkit.getOnlinePlayers()) {
-                    if (all.isOp()) {
+                    if (all.isOp() || all.hasPermission("bookrules.admin")) {
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4Could not connect to database! Please check your database/credentials.", all);
                     } else
                         messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4The MySQL connection for the BookRules plugin failed, please contact an administrator!\n§7In case you have access to the server, please check your console and fix the errors!", all);

@@ -34,7 +34,7 @@ public class JoinQuitListener implements Listener {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§cYou are running an outdated version, please download a newer one at:§4 https://bit.ly/bookrules", event.getPlayer());
         }
 
-        if (event.getPlayer().isOp() && !bookRules.configFile.isSuccessful()) {
+        if (event.getPlayer().isOp() && !bookRules.isConfigSuccessful) {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§cYour config is not valid! Please check your console and solve the errors!", event.getPlayer());
         }
 

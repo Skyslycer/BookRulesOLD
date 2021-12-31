@@ -1,10 +1,13 @@
 package de.skyslycer.bookrules.core;
 
-import de.skyslycer.bookrules.util.YamlFileWriter;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class MessageManager {
     public String standardPrefix = "§7[§cBookRules§7] ";
@@ -15,41 +18,53 @@ public class MessageManager {
     public String alreadyAccepted = "&7You &calready accepted &7the &crules!";
     public boolean debugMode = false;
 
-    public void instantiateMessages(YamlFileWriter configFile) {
+    public void instantiateMessages(FileConfiguration configFile, Path configPath) {
         if (configFile.getString("prefix") == null) {
-            configFile.setValue("prefix", "&7[&cBookRules&7]");
-        } else prefix = configFile.getString("prefix") + " ";
+            configFile.set("prefix", "&7[&cBookRules&7]");
+        }
+        prefix = configFile.getString("prefix") + " ";
         prefix = ChatColor.translateAlternateColorCodes('&', prefix);
 
         if (configFile.getString("kick-text") == null) {
-            configFile.setValue("kick-text", "&7In order to &aplay &7on the server, you need to &aagree &7to the rules!");
-        } else kickText = configFile.getString("kick-text");
+            configFile.set("kick-text", "&7In order to &aplay &7on the server, you need to &aagree &7to the rules!");
+        }
+        kickText = configFile.getString("kick-text");
         kickText = ChatColor.translateAlternateColorCodes('&', kickText);
 
         if (configFile.getString("accept-message") == null) {
-            configFile.setValue("accept-message", "&7You successfully &aaccepted &7the &arules.");
-        } else acceptRules = configFile.getString("accept-message");
+            configFile.set("accept-message", "&7You successfully &aaccepted &7the &arules.");
+        }
+        acceptRules = configFile.getString("accept-message");
         acceptRules = ChatColor.translateAlternateColorCodes('&', acceptRules);
 
         if (configFile.getString("already-accepted-message") == null) {
-            configFile.setValue("already-accepted-message", "&7You &calready accepted &7the &crules!");
-        } else alreadyAccepted = configFile.getString("already-accepted-message");
+            configFile.set("already-accepted-message", "&7You &calready accepted &7the &crules!");
+        }
+        alreadyAccepted = configFile.getString("already-accepted-message");
         alreadyAccepted = ChatColor.translateAlternateColorCodes('&', alreadyAccepted);
 
         if (configFile.getString("no-permission") == null) {
-            configFile.setValue("no-permission", "&4You don't have permission to run this command!");
-        } else noPermission = configFile.getString("no-permission");
+            configFile.set("no-permission", "&4You don't have permission to run this command!");
+        }
+        noPermission = configFile.getString("no-permission");
         noPermission = ChatColor.translateAlternateColorCodes('&', noPermission);
 
         if (configFile.getString("debug-mode") == null) {
-            configFile.setValue("debug-mode", false);
-        } else debugMode = configFile.getBoolean("debug-mode");
+            configFile.set("debug-mode", false);
+        }
+        debugMode = configFile.getBoolean("debug-mode");
 
         sendDebug("Prefix: " + prefix);
         sendDebug("Kick text: " + kickText);
         sendDebug("Message sent on accept: " + acceptRules);
         sendDebug("Message sent if the rules are already accepted: " + alreadyAccepted);
         sendDebug("No permission message: " + noPermission);
+
+        try {
+            configFile.save(configPath.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void sendMessage(MessageType messageType, String message, CommandSender sender) {
@@ -229,7 +244,7 @@ public class MessageManager {
         MESSAGE_SET_ACCEPTED_STATUS,
         MESSAGE_PLAYER_ALREADY_ACCEPTED,
         MESSAGE_PLAYER_STATUS_ACCEPTED,
-        MESSAGE_PLAYER_STATUS_DECLINED;
+        MESSAGE_PLAYER_STATUS_DECLINED
     }
 
     public enum DebugType {
@@ -240,6 +255,6 @@ public class MessageManager {
         DEBUG_ACCEPTING,
         DEBUG_KICK,
         DEBUG_WARN,
-        DEBUG_UNSUPPORTED_VERSION;
+        DEBUG_UNSUPPORTED_VERSION
     }
 }

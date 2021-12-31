@@ -1,10 +1,4 @@
-# ██████╗░░█████╗░░█████╗░██╗░░██╗██████╗░██╗░░░██╗██╗░░░░░███████╗░██████╗
-# ██╔══██╗██╔══██╗██╔══██╗██║░██╔╝██╔══██╗██║░░░██║██║░░░░░██╔════╝██╔════╝
-# ██████╦╝██║░░██║██║░░██║█████═╝░██████╔╝██║░░░██║██║░░░░░█████╗░░╚█████╗░
-# ██╔══██╗██║░░██║██║░░██║██╔═██╗░██╔══██╗██║░░░██║██║░░░░░██╔══╝░░░╚═══██╗
-# ██████╦╝╚█████╔╝╚█████╔╝██║░╚██╗██║░░██║╚██████╔╝███████╗███████╗██████╔╝
-# ╚═════╝░░╚════╝░░╚════╝░╚═╝░░╚═╝╚═╝░░╚═╝░╚═════╝░╚══════╝╚══════╝╚═════╝░
-# ░░░░░░░░░░░░░░░░░░░░░░ by Skyslycer -  v.2.0 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+﻿# BookRules by Skyslycer - v2.0
 
 # The prefix showing up on almost all player messages
 prefix: '&7[&cBookRules&7]'
@@ -28,25 +22,25 @@ debug-mode: false
 use-permissions: false
 
 # The storage method, either local or mysql
-storage-method: local
+storage-method: 'local'
 
 # MySQL Settings
 mysql:
   # The host for the MySQL server
-  host: localhost
+  host: 'localhost'
 
   # The port where MySQL runs
   port: 3306
 
   # Username and password to log in
-  username: root
-  password: supersecurepassword
+  username: 'root'
+  password: 'supersecurepassword'
 
   # The database name
-  database: bookrules
+  database: 'bookrules'
 
   # The prefix for tables
-  prefix: br_
+  prefix: 'br_'
 
 # The button replaced by <acceptbutton> (clickable)
 accept-button: '&a[ACCEPT]'
@@ -64,17 +58,17 @@ content:
     # The contents of this page, configured as a list
     - '&cIf you see this, please contact a server administrator or owner to configure
     this plugin properly.'
-    - If you want to know how configure this plugin, please visit the plugin page. The
-      wiki is well documented and easy to understand.
+    - 'If you want to know how configure this plugin, please visit the plugin page. The
+      wiki is well documented and easy to understand.'
     - 'Plugin page: http://bit.ly/bookrules'
   '2':
     - 'Colorcode examples:'
     - '&7[&61&7] &6Don''t grief!'
     - '&7[&62&7] &6Don''t hack!'
   '3':
-    - 'Minimessage examples:'
-    - <click:run_command:/say hello>Click</click> to say hello
-    - <hover:show_text:'<red>test'>TEST</hover>
+    - 'MiniMessage examples:'
+    - '<click:run_command:/say hello>Click</click> to say hello'
+    - '<hover:show_text:''<red>test''>hover :)</hover>'
     - ' '
-    - If you need help configuring, go to the wiki!
-    - http://bit.ly/bookrules-wiki
+    - 'If you need help configuring, go to the wiki!'
+    - 'http://bit.ly/bookrules-wiki'

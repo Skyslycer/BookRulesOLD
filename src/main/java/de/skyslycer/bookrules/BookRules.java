@@ -18,19 +18,18 @@ import de.skyslycer.bookrules.listener.BlockListener;
 import de.skyslycer.bookrules.listener.JoinQuitListener;
 import de.skyslycer.bookrules.util.MCVersion;
 import de.skyslycer.bookrules.util.StorageType;
-import de.skyslycer.bookrules.util.YamlFileWriter;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -45,7 +44,6 @@ public final class BookRules extends JavaPlugin {
 
     private final Map<Player, Location> playerCache = new ConcurrentHashMap<>();
 
-    public YamlFileWriter configFile;
     public boolean isConfigSuccessful;
     public boolean isLatestVersion;
     public HttpClient httpClient;
@@ -74,7 +72,7 @@ public final class BookRules extends JavaPlugin {
     public void onEnable() {
         instance = this;
         injectData();
-        instantiateConfig();
+        isConfigSuccessful = instantiateConfig();
         rulesAPI.getPlayerData();
         instantiateMetrics();
         startThread();
@@ -91,17 +89,19 @@ public final class BookRules extends JavaPlugin {
         pluginManager.registerEvents(joinQuitListener, this);
         pluginManager.registerEvents(blockListener, this);
 
-        if (!configFile.isSuccessful()) {
+        if (!isConfigSuccessful) {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4Bookrules failed to load config! Please correct the errors!", Bukkit.getConsoleSender());
-        } else
+        } else {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§aBookRules §7successfully loaded!", Bukkit.getConsoleSender());
+        }
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§aPlaceholderAPI §7successfully registered!", Bukkit.getConsoleSender());
-        } else
+        } else {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_CUSTOM_PREFIX, "§4PlaceholderAPI §7couldn't be found! Placeholders are not supported!", Bukkit.getConsoleSender());
+        }
 
-        if (MCVersion.getVersion().isOlderThan(MCVersion.v1_12_R1)) {
+        if (MCVersion.getVersion().isMajorOlderThan(MCVersion.v1_12_R1.getMajorVersion())) {
             messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4You are running an unsupported version of minecraft! Do NOT expect working features/support!");
         }
     }
@@ -118,6 +118,7 @@ public final class BookRules extends JavaPlugin {
         bookManager.injectData(messageManager, permissionManager);
         blockListener.injectData(bookManager);
         joinQuitListener.injectData(bookManager, this, messageManager, playerCache);
+        databaseManager.injectData(messageManager);
     }
 
     public void instantiateMetrics() {
@@ -170,65 +171,58 @@ public final class BookRules extends JavaPlugin {
             });
         }
 
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> playerCache.forEach((player, location) -> {
-            rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString()).thenAccept((hasAccepted) -> {
-                if (hasAccepted) {
-                    playerCache.remove(player);
-                    return;
-                }
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> playerCache.forEach((player, location) -> rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString()).thenAccept((hasAccepted) -> {
+            if (hasAccepted) {
+                playerCache.remove(player);
+                return;
+            }
 
-                if (player.getLocation().distanceSquared(location) >= 0.1) {
-                    player.teleport(location);
-                    bookManager.openBook(player, "bookrules.onclose", false);
-                }
-            });
-        }), 0, 20);
+            if (player.getLocation().distanceSquared(location) >= 0.1) {
+                player.teleport(location);
+                bookManager.openBook(player, "bookrules.onclose", false);
+            }
+        })), 0, 20);
     }
 
     public boolean instantiateConfig() {
-        Path configPath = Paths.get(getDataFolder().toString(), "config.yml");
+        Path configPath = Paths.get(getDataFolder().getPath(), "config.yml");
+        saveDefaultConfig();
 
-        if (!Files.exists(configPath)) {
+        try {
+            YamlConfiguration.loadConfiguration(configPath.toFile());
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return false;
+        }
+
+        //messages
+        messageManager.instantiateMessages(getConfig(), configPath);
+
+        //extra permissions
+        permissionManager.instantiatePermissions(getConfig(), configPath, messageManager);
+
+        //storage method
+        if (getConfig().getString("storage-method") != null) {
+            if (getConfig().getString("storage-method").equalsIgnoreCase("mysql")) {
+                storageType = StorageType.MYSQL;
+            } else storageType = StorageType.LOCAL;
+        } else getConfig().set("storage-method", "local");
+
+        //mysql
+        databaseManager.instantiateConfig(getConfig(), configPath);
+
+        //content
+        bookManager.instantiateContent(getConfig(), configPath);
+
+        //starting mysql innit if enabled
+        if (storageType == StorageType.MYSQL) {
             try {
-                Files.createDirectories(configPath.getParent());
-                Files.copy(this.getClassLoader().getResourceAsStream("config.yml"), configPath);
-            } catch (IOException exception) {
-                try {
-                    Files.createFile(configPath);
-                } catch (IOException anotherException) {
-                    anotherException.printStackTrace();
-                    return false;
-                }
+                dataSource = databaseManager.initMySQLDataSource(messageManager, this);
+                databaseManager.createTable(this, dataSource);
+            } catch (SQLException e) {
+                databaseManager.logSQLError(e);
             }
         }
-
-        configFile = new YamlFileWriter("plugins//BookRules", "config.yml");
-        isConfigSuccessful = configFile.isSuccessful();
-        if (configFile.isSuccessful()) {
-            //messages
-            messageManager.instantiateMessages(configFile);
-            //extra permissions
-            permissionManager.instantiatePermissions(configFile, messageManager);
-            //storage method
-            if (configFile.getString("storage-method") != null) {
-                if (configFile.getString("storage-method").equalsIgnoreCase("mysql")) {
-                    storageType = StorageType.MYSQL;
-                } else storageType = StorageType.LOCAL;
-            } else configFile.setValue("storage-method", "local");
-            //mysql
-            databaseManager.instantiateConfig(configFile);
-            //content
-            bookManager.instantiateContent(configFile);
-            //starting mysql innit if enabled
-            if (storageType == StorageType.MYSQL) {
-                try {
-                    dataSource = databaseManager.initMySQLDataSource(messageManager, this);
-                    databaseManager.createTable(this, dataSource);
-                } catch (SQLException e) {
-                    databaseManager.logSQLError(e);
-                }
-            }
-        }
-        return isConfigSuccessful;
+        return true;
     }
 }
