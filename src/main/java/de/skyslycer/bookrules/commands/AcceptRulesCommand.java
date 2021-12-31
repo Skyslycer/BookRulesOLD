@@ -42,7 +42,7 @@ public class AcceptRulesCommand implements CommandExecutor {
             if (hasAccepted) {
                 messageManager.sendMessage(MessageManager.MessageType.MESSAGE_ALREADY_ACCEPTED, player);
                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
-            } else  {
+            } else {
                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTING, player.getName());
                 rulesAPI.acceptRules(player.getUniqueId().toString());

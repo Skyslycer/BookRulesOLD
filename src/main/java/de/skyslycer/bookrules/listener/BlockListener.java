@@ -2,7 +2,6 @@ package de.skyslycer.bookrules.listener;
 
 import de.skyslycer.bookrules.api.RulesAPI;
 import de.skyslycer.bookrules.core.BookManager;
-import de.skyslycer.bookrules.core.MessageManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;

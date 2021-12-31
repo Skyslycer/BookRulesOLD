@@ -47,7 +47,7 @@ public class DeclineRulesCommand implements CommandExecutor {
             if (hasAccepted) {
                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
                 rulesAPI.declineRules(player.getUniqueId().toString());
-            } else  {
+            } else {
                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINED, player.getName());
             }
         });

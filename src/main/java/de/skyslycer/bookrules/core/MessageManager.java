@@ -223,7 +223,7 @@ public class MessageManager {
 
     public void sendDebug(DebugType debugType) {
         if (debugType == DebugType.DEBUG_UNSUPPORTED_VERSION) {
-            Bukkit.getLogger().warning(standardPrefix + "§4WARN:\n §7You are running an §4OUTDATED §7version of this plugin! Please update to the newest at:§4 https://bit.ly/bookrules");
+            Bukkit.getLogger().warning(standardPrefix + "§4WARN:\n §7You are running an §4OUTDATED §7version of this plugin! Please update to the latest version at:§4 https://bit.ly/bookrules");
         }
     }
 

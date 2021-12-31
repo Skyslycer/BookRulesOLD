@@ -2,9 +2,6 @@ package de.skyslycer.bookrules;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.intellectualsites.http.EntityMapper;
-import com.intellectualsites.http.HttpClient;
-import com.intellectualsites.http.external.GsonMapper;
 import de.skyslycer.bookrules.api.RulesAPI;
 import de.skyslycer.bookrules.commands.AcceptRulesCommand;
 import de.skyslycer.bookrules.commands.BookRulesCommand;
@@ -23,13 +20,17 @@ import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.sql.DataSource;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -46,7 +47,6 @@ public final class BookRules extends JavaPlugin {
 
     public boolean isConfigSuccessful;
     public boolean isLatestVersion;
-    public HttpClient httpClient;
     public DataSource dataSource;
     public ArrayList<String> players = new ArrayList<>();
     public StorageType storageType;
@@ -137,18 +137,18 @@ public final class BookRules extends JavaPlugin {
 
     public void getLatestVersion() {
         isLatestVersion = true;
+        HttpClient client = HttpClient.newHttpClient();
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             isLatestVersion = true;
-            httpClient = HttpClient.newBuilder()
-                    .withBaseURL("https://api.spiget.org")
-                    .withEntityMapper(EntityMapper.newInstance().registerDeserializer(JsonObject.class, GsonMapper.deserializer(JsonObject.class, new Gson())))
-                    .build();
-
-            httpClient.get("v2/resources/91272/versions/latest")
-                    .withHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36 Edg/90.0.818.42")
-                    .onStatus(200, response -> {
+            try {
+                var request = client.send(HttpRequest.newBuilder()
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.72 Safari/537.36 Edg/90.0.818.42")
+                        .uri(URI.create("https://api.spiget.org/v2/resources/91272/versions/latest"))
+                        .build(), HttpResponse.BodyHandlers.ofInputStream());
+                switch (request.statusCode()) {
+                    case 200 -> {
                         messageManager.sendDebug("§aSuccessfully received version data.");
-                        final JsonObject jsonObject = response.getResponseEntity(JsonObject.class);
+                        final JsonObject jsonObject = new Gson().fromJson(new InputStreamReader(request.body()), JsonObject.class);
                         if (jsonObject.get("name") != null) {
                             latestVersion = Float.parseFloat(jsonObject.get("name").getAsString());
                             if (latestVersion > currentVersion) {
@@ -156,11 +156,13 @@ public final class BookRules extends JavaPlugin {
                                 messageManager.sendDebug(MessageManager.DebugType.DEBUG_UNSUPPORTED_VERSION);
                             }
                         }
-                    })
-                    .onStatus(404, response -> messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4ERROR: Could not find the api, please ensure you have a working internet connection or contact the developer."))
-                    .onRemaining(response -> messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4ERROR: Got following status code: " + response.getStatusCode() + ". Please ensure you have a working internet connection or contact the developer."))
-                    .onException(Throwable::printStackTrace)
-                    .execute();
+                    }
+                    case 404 -> messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4ERROR: Could not find the api, please ensure you have a working internet connection or contact the developer.");
+                    default -> messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4ERROR: Got following status code: " + request.statusCode() + ". Please ensure you have a working internet connection or contact the developer.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }, 20, 72000);
     }
 
