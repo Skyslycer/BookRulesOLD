@@ -26,6 +26,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.sql.DataSource;
+import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -54,8 +55,6 @@ public final class BookRules extends JavaPlugin {
     public MessageManager messageManager = new MessageManager();
     public PermissionManager permissionManager = new PermissionManager();
     public DatabaseManager databaseManager = new DatabaseManager();
-    double latestVersion;
-    double currentVersion = 2.0;
     BookManager bookManager = new BookManager();
     AcceptRulesCommand acceptRulesCommand = new AcceptRulesCommand();
     BookRulesCommand bookRulesCommand = new BookRulesCommand();
@@ -124,6 +123,11 @@ public final class BookRules extends JavaPlugin {
     public void instantiateMetrics() {
         Metrics metrics = new Metrics(this, 11121);
         metrics.addCustomChart(new SimplePie("latest_version", () -> String.valueOf(isLatestVersion)));
+        metrics.addCustomChart(new AdvancedPie("versions", () -> {
+            HashMap<String, Integer> values = new HashMap<>();
+            values.put(String.valueOf(getVersion()), 1);
+            return values;
+        }));
         metrics.addCustomChart(new AdvancedPie("storage_types", () -> {
             HashMap<String, Integer> values = new HashMap<>();
             if (storageType == StorageType.LOCAL) {
@@ -136,7 +140,6 @@ public final class BookRules extends JavaPlugin {
     }
 
     public void getLatestVersion() {
-        isLatestVersion = true;
         HttpClient client = HttpClient.newHttpClient();
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             isLatestVersion = true;
@@ -147,21 +150,26 @@ public final class BookRules extends JavaPlugin {
                         .build(), HttpResponse.BodyHandlers.ofInputStream());
                 switch (request.statusCode()) {
                     case 200 -> {
-                        messageManager.sendDebug("§aSuccessfully received version data.");
-                        final JsonObject jsonObject = new Gson().fromJson(new InputStreamReader(request.body()), JsonObject.class);
-                        if (jsonObject.get("name") != null) {
-                            latestVersion = Float.parseFloat(jsonObject.get("name").getAsString());
-                            if (latestVersion > currentVersion) {
-                                isLatestVersion = false;
-                                messageManager.sendDebug(MessageManager.DebugType.DEBUG_UNSUPPORTED_VERSION);
+                        try {
+                            messageManager.sendDebug("§aSuccessfully received version data.");
+                            JsonObject jsonObject = new Gson().fromJson(new InputStreamReader(request.body()), JsonObject.class);
+                            if (jsonObject.get("name") != null) {
+                                var latestVersion = Integer.parseInt(jsonObject.get("name").getAsString().replace(".", ""));
+                                if (latestVersion > getVersion()) {
+                                    isLatestVersion = false;
+                                    messageManager.sendDebug(MessageManager.DebugType.DEBUG_UNSUPPORTED_VERSION);
+                                }
                             }
+                        } catch (Exception ignored) {
+                            isLatestVersion = false;
+                            messageManager.sendDebug(MessageManager.DebugType.DEBUG_UNSUPPORTED_VERSION);
                         }
                     }
                     case 404 -> messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4ERROR: Could not find the api, please ensure you have a working internet connection or contact the developer.");
                     default -> messageManager.sendDebug(MessageManager.DebugType.DEBUG_WARN, "§4ERROR: Got following status code: " + request.statusCode() + ". Please ensure you have a working internet connection or contact the developer.");
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception exception) {
+                exception.printStackTrace();
             }
         }, 20, 72000);
     }
@@ -227,4 +235,15 @@ public final class BookRules extends JavaPlugin {
         }
         return true;
     }
+
+    private int getVersion() {
+        try {
+            return Integer.parseInt(new BufferedReader(
+                    new InputStreamReader(BookRules.class.getClassLoader().getResourceAsStream("version"))).lines().findFirst().get().replace(".", "")
+            );
+        } catch (Exception exception) {
+            return 0;
+        }
+    }
+
 }
