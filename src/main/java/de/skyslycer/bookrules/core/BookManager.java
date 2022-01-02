@@ -44,7 +44,7 @@ public class BookManager {
         this.permissionManager = permissionManager;
     }
 
-    public void instantiateContent(FileConfiguration configFile, Path configPath) {
+    public void instantiateContent(FileConfiguration configFile) {
         if (configFile.getString("accept-button") == null) {
             configFile.set("accept-button", "&a[ACCEPT]");
         }
@@ -71,7 +71,7 @@ public class BookManager {
             bookContent.clear();
             for (String key : configFile.getConfigurationSection("content").getKeys(false)) {
                 rawBookContent = (ArrayList<String>) configFile.getList("content." + key);
-                page = String.join("\n§r", rawBookContent);
+                page = String.join("§r\n", rawBookContent);
                 page = ChatColor.translateAlternateColorCodes('&', page);
                 bookContent.add(page);
             }
@@ -81,8 +81,9 @@ public class BookManager {
             ArrayList<String> default2 = new ArrayList<>();
             ArrayList<String> default3 = new ArrayList<>();
             //first page
-            default1.add("&cIf you see this, please contact a server administrator or owner to configure this plugin properly.");
+            default1.add("&cIf you see this, please contact a server administrator or owner to configure this plugin properly.&r");
             default1.add("If you want to know how configure this plugin, please visit the plugin page. The wiki is well documented and easy to understand.");
+            default1.add(" ");
             default1.add("Plugin page: http://bit.ly/bookrules");
             //second page
             default2.add("Colorcode examples:");
@@ -99,11 +100,7 @@ public class BookManager {
             configFile.set("content.2", default2);
             configFile.set("content.3", default3);
         }
-        try {
-            configFile.save(configPath.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
         int i = 1;
         for (String page : bookContent) {
             messageManager.sendDebug("\n" + "Page " + i + ":\n" + page);

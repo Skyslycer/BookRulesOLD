@@ -17,15 +17,12 @@ import java.util.List;
 
 public class BookRulesCommand implements CommandExecutor, TabCompleter {
     RulesAPI rulesAPI = new RulesAPI();
-
     String kickText;
-
     MessageManager messageManager;
     BookRules bookRules;
 
     public void injectData(MessageManager messageManager, BookRules bookRules) {
         this.messageManager = messageManager;
-        this.kickText = messageManager.kickText;
         this.bookRules = bookRules;
     }
 
@@ -102,6 +99,7 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
 
                         Player player = (Player) sender;
 
+                        this.kickText = messageManager.kickText;
                         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
                             kickText = PlaceholderAPI.setPlaceholders(player, kickText);
                         }

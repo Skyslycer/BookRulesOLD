@@ -18,33 +18,34 @@ public class MessageManager {
     public String alreadyAccepted = "&7You &calready accepted &7the &crules!";
     public boolean debugMode = false;
 
-    public void instantiateMessages(FileConfiguration configFile, Path configPath) {
+    public void instantiateMessages(FileConfiguration configFile) {
         if (configFile.getString("prefix") == null) {
-            configFile.set("prefix", "&7[&cBookRules&7]");
+            configFile.set("prefix", prefix);
         }
         prefix = configFile.getString("prefix") + " ";
         prefix = ChatColor.translateAlternateColorCodes('&', prefix);
 
         if (configFile.getString("kick-text") == null) {
-            configFile.set("kick-text", "&7In order to &aplay &7on the server, you need to &aagree &7to the rules!");
+            System.out.println(configFile.getString("kick-text"));
+            configFile.set("kick-text", kickText);
         }
         kickText = configFile.getString("kick-text");
         kickText = ChatColor.translateAlternateColorCodes('&', kickText);
 
         if (configFile.getString("accept-message") == null) {
-            configFile.set("accept-message", "&7You successfully &aaccepted &7the &arules.");
+            configFile.set("accept-message", acceptRules);
         }
         acceptRules = configFile.getString("accept-message");
         acceptRules = ChatColor.translateAlternateColorCodes('&', acceptRules);
 
         if (configFile.getString("already-accepted-message") == null) {
-            configFile.set("already-accepted-message", "&7You &calready accepted &7the &crules!");
+            configFile.set("already-accepted-message", alreadyAccepted);
         }
         alreadyAccepted = configFile.getString("already-accepted-message");
         alreadyAccepted = ChatColor.translateAlternateColorCodes('&', alreadyAccepted);
 
         if (configFile.getString("no-permission") == null) {
-            configFile.set("no-permission", "&4You don't have permission to run this command!");
+            configFile.set("no-permission", noPermission);
         }
         noPermission = configFile.getString("no-permission");
         noPermission = ChatColor.translateAlternateColorCodes('&', noPermission);
@@ -59,12 +60,6 @@ public class MessageManager {
         sendDebug("Message sent on accept: " + acceptRules);
         sendDebug("Message sent if the rules are already accepted: " + alreadyAccepted);
         sendDebug("No permission message: " + noPermission);
-
-        try {
-            configFile.save(configPath.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void sendMessage(MessageType messageType, String message, CommandSender sender) {

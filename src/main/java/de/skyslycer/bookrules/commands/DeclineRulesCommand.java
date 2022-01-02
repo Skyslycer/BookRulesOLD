@@ -20,7 +20,6 @@ public class DeclineRulesCommand implements CommandExecutor {
     public void injectData(MessageManager messageManager, PermissionManager permissionManager) {
         this.messageManager = messageManager;
         this.permissionManager = permissionManager;
-        this.kickText = messageManager.kickText;
     }
 
     @Override
@@ -29,6 +28,8 @@ public class DeclineRulesCommand implements CommandExecutor {
             messageManager.sendMessage(MessageManager.MessageType.MESSAGE_NO_PLAYER, sender);
             return true;
         }
+
+        this.kickText = messageManager.kickText;
 
         Player player = (Player) sender;
         messageManager.sendDebug(MessageManager.DebugType.DEBUG_DECLINING, player.getName());

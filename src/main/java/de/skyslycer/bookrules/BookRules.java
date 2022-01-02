@@ -32,8 +32,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -196,35 +198,38 @@ public final class BookRules extends JavaPlugin {
 
     public boolean instantiateConfig() {
         Path configPath = Paths.get(getDataFolder().getPath(), "config.yml");
-        saveDefaultConfig();
-
         try {
+            if (!Files.exists(configPath)) {
+                Files.copy(BookRules.class.getClassLoader().getResourceAsStream("config.yml"), configPath);
+            }
             YamlConfiguration.loadConfiguration(configPath.toFile());
         } catch (Exception exception) {
             exception.printStackTrace();
             return false;
         }
 
-        //messages
-        messageManager.instantiateMessages(getConfig(), configPath);
+        reloadConfig();
 
-        //extra permissions
-        permissionManager.instantiatePermissions(getConfig(), configPath, messageManager);
+        // messages
+        messageManager.instantiateMessages(getConfig());
 
-        //storage method
+        // extra permissions
+        permissionManager.instantiatePermissions(getConfig(), messageManager);
+
+        // storage method
         if (getConfig().getString("storage-method") != null) {
             if (getConfig().getString("storage-method").equalsIgnoreCase("mysql")) {
                 storageType = StorageType.MYSQL;
             } else storageType = StorageType.LOCAL;
         } else getConfig().set("storage-method", "local");
 
-        //mysql
-        databaseManager.instantiateConfig(getConfig(), configPath);
+        // mysql
+        databaseManager.instantiateConfig(getConfig());
 
-        //content
-        bookManager.instantiateContent(getConfig(), configPath);
+        // content
+        bookManager.instantiateContent(getConfig());
 
-        //starting mysql innit if enabled
+        // starting mysql innit if enabled
         if (storageType == StorageType.MYSQL) {
             try {
                 dataSource = databaseManager.initMySQLDataSource(messageManager, this);

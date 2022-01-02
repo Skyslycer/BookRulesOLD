@@ -28,7 +28,7 @@ public class DatabaseManager {
         this.messageManager = messageManager;
     }
 
-    public void instantiateConfig(FileConfiguration configFile, Path configPath) {
+    public void instantiateConfig(FileConfiguration configFile) {
         if (configFile.getString("mysql.host") == null) {
             configFile.set("mysql.host", "localhost");
         }
@@ -64,12 +64,6 @@ public class DatabaseManager {
         }
         databasePrefix = configFile.getString("mysql.prefix");
         messageManager.sendDebug("MySQL table prefix: " + databasePrefix);
-
-        try {
-            configFile.save(configPath.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public DataSource initMySQLDataSource(MessageManager messageManager, BookRules plugin) throws SQLException {

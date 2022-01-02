@@ -56,10 +56,9 @@ content:
   # The page
   '1':
     # The contents of this page, configured as a list
-    - '&cIf you see this, please contact a server administrator or owner to configure
-    this plugin properly.'
-    - 'If you want to know how configure this plugin, please visit the plugin page. The
-      wiki is well documented and easy to understand.'
+    - '&cIf you see this, please contact a server administrator or owner to configure this plugin properly.&r'
+    - 'If you want to know how configure this plugin, please visit the plugin page. The wiki is well documented and easy to understand.'
+    - ' '
     - 'Plugin page: http://bit.ly/bookrules'
   '2':
     - 'Colorcode examples:'
