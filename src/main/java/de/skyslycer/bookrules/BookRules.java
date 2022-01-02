@@ -15,6 +15,7 @@ import de.skyslycer.bookrules.listener.BlockListener;
 import de.skyslycer.bookrules.listener.JoinQuitListener;
 import de.skyslycer.bookrules.util.MCVersion;
 import de.skyslycer.bookrules.util.StorageType;
+import de.skyslycer.bookrules.util.VersionBatch;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
@@ -71,6 +72,8 @@ public final class BookRules extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        System.out.println(getVersion());
+
         instance = this;
         injectData();
         isConfigSuccessful = instantiateConfig();
@@ -156,8 +159,8 @@ public final class BookRules extends JavaPlugin {
                             messageManager.sendDebug("§aSuccessfully received version data.");
                             JsonObject jsonObject = new Gson().fromJson(new InputStreamReader(request.body()), JsonObject.class);
                             if (jsonObject.get("name") != null) {
-                                var latestVersion = Integer.parseInt(jsonObject.get("name").getAsString().replace(".", ""));
-                                if (latestVersion > getVersion()) {
+                                var latestVersion = VersionBatch.fromString(jsonObject.get("name").getAsString());
+                                if (VersionBatch.fromString(getVersion()).isOlderThan(latestVersion)) {
                                     isLatestVersion = false;
                                     messageManager.sendDebug(MessageManager.DebugType.DEBUG_UNSUPPORTED_VERSION);
                                 }
@@ -200,6 +203,7 @@ public final class BookRules extends JavaPlugin {
         Path configPath = Paths.get(getDataFolder().getPath(), "config.yml");
         try {
             if (!Files.exists(configPath)) {
+                Files.createDirectories(getDataFolder().toPath());
                 Files.copy(BookRules.class.getClassLoader().getResourceAsStream("config.yml"), configPath);
             }
             YamlConfiguration.loadConfiguration(configPath.toFile());
@@ -241,13 +245,12 @@ public final class BookRules extends JavaPlugin {
         return true;
     }
 
-    private int getVersion() {
+    private String getVersion() {
         try {
-            return Integer.parseInt(new BufferedReader(
-                    new InputStreamReader(BookRules.class.getClassLoader().getResourceAsStream("version"))).lines().findFirst().get().replace(".", "")
-            );
+            return new BufferedReader(new InputStreamReader(BookRules.class.getClassLoader().getResourceAsStream("version"))).lines().findFirst().get();
         } catch (Exception exception) {
-            return 0;
+            exception.printStackTrace();
+            return "0.0.0";
         }
     }
 
