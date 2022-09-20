@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 
 public enum MCVersion {
 
-    vUNKNOWN(-1),
+    vUNKNOWN(1000),
     v1_8_R1(8),
     v1_8_R2(8),
     v1_8_R3(8),

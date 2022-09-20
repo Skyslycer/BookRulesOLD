@@ -16,6 +16,24 @@ import de.skyslycer.bookrules.listener.JoinQuitListener;
 import de.skyslycer.bookrules.util.MCVersion;
 import de.skyslycer.bookrules.util.StorageType;
 import de.skyslycer.bookrules.util.VersionBatch;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.sql.DataSource;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.Builder;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SimplePie;
@@ -26,24 +44,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import javax.sql.DataSource;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public final class BookRules extends JavaPlugin {
+
+    public static final String DISCORD_URL = "https://discord.gg/C8US3QmXhJ";
+    public static final String DOWNLOAD = "http://bit.ly/bookrules";
+
+    public static final Builder LEGACY_BUILDER = LegacyComponentSerializer.builder().character('&').hexCharacter('#').hexColors().useUnusualXRepeatedCharacterHexFormat();
 
     public static BookRules instance;
 
@@ -252,6 +258,10 @@ public final class BookRules extends JavaPlugin {
             exception.printStackTrace();
             return "0.0.0";
         }
+    }
+
+    public static String legacy(String string) {
+        return MiniMessage.miniMessage().serialize(LEGACY_BUILDER.build().deserialize(string));
     }
 
 }

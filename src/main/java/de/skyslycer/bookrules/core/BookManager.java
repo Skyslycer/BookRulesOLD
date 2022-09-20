@@ -1,16 +1,20 @@
 package de.skyslycer.bookrules.core;
 
+import de.skyslycer.bookrules.BookRules;
 import de.skyslycer.bookrules.api.RulesAPI;
 import de.skyslycer.bookrules.util.MCVersion;
 import de.skyslycer.bookrules.util.NMSUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.Template;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.bungeecord.BungeeComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
@@ -20,14 +24,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 public class BookManager {
+
     public ArrayList<String> bookContent = new ArrayList<>();
     public ArrayList<String> rawBookContent;
     public String acceptText;
@@ -50,21 +48,22 @@ public class BookManager {
         }
         acceptButton = configFile.getString("accept-button");
         messageManager.sendDebug("Accept button: " + acceptButton);
-        acceptButton = ChatColor.translateAlternateColorCodes('&', acceptButton);
+        acceptButton = BookRules.legacy(acceptButton);
 
         if (configFile.getString("decline-button") == null) {
             configFile.set("decline-button", "&4[DECLINE]");
         }
         declineButton = configFile.getString("decline-button");
         messageManager.sendDebug("Decline button: " + declineButton);
-        declineButton = ChatColor.translateAlternateColorCodes('&', declineButton);
+        declineButton = BookRules.legacy(declineButton);
 
         if (configFile.getString("accept-text") == null) {
-            configFile.set("accept-text", "&7If you accept the &7rules, you agree to &7the rules and &7punishments for &7breaking them. If you &7decline, you will be &7kicked. \n\n<acceptbutton> <declinebutton>");
+            configFile.set("accept-text",
+                    "&7If you accept the &7rules, you agree to &7the rules and &7punishments for &7breaking them. If you &7decline, you will be &7kicked. \n\n<acceptbutton> <declinebutton>");
         }
         acceptText = configFile.getString("accept-text");
         messageManager.sendDebug("Text on the last page: " + acceptText);
-        acceptText = ChatColor.translateAlternateColorCodes('&', acceptText);
+        acceptText = BookRules.legacy(acceptText);
 
         if (configFile.contains("content")) {
             String page;
@@ -82,7 +81,8 @@ public class BookManager {
             ArrayList<String> default3 = new ArrayList<>();
             //first page
             default1.add("&cIf you see this, please contact a server administrator or owner to configure this plugin properly.&r");
-            default1.add("If you want to know how configure this plugin, please visit the plugin page. The wiki is well documented and easy to understand.");
+            default1.add(
+                    "If you want to know how configure this plugin, please visit the plugin page. The wiki is well documented and easy to understand.");
             default1.add(" ");
             default1.add("Plugin page: http://bit.ly/bookrules");
             //second page
@@ -115,7 +115,9 @@ public class BookManager {
             rulesAPI.playerHasAcceptedRules(player.getUniqueId().toString()).thenAccept((hasAccepted) -> {
                 if (hasAccepted) {
                     messageManager.sendDebug(MessageManager.DebugType.DEBUG_ACCEPTED, player.getName());
-                } else open(player, permission);
+                } else {
+                    open(player, permission);
+                }
             });
         }
     }
@@ -142,18 +144,12 @@ public class BookManager {
         }
 
         for (String page : bookContent) {
-            Component component = MiniMessage.get().parse(page);
+            Component component = MiniMessage.miniMessage().deserialize(BookRules.legacy(page));
             customBookContent.add(BungeeComponentSerializer.get().serialize(component));
         }
 
-        List<Template> templates = Arrays.asList(
-                Template.of("acceptbutton", Component.text(acceptButton).clickEvent(
-                        ClickEvent.runCommand("/acceptrules"))),
-                Template.of("declinebutton", Component.text(declineButton).clickEvent(
-                        ClickEvent.runCommand("/declinerules")))
-        );
-
-        Component component = MiniMessage.get().parse(acceptText, templates);
+        Component component = MiniMessage.miniMessage().deserialize(acceptText, Placeholder.component("acceptbutton", Component.text(acceptButton).clickEvent(ClickEvent.runCommand("/acceptrules"))),
+                        Placeholder.component("declinebutton", Component.text(declineButton).clickEvent(ClickEvent.runCommand("/declinerules"))));
         BaseComponent[] acceptTextComponent = BungeeComponentSerializer.get().serialize(component);
 
         for (BaseComponent[] bookContentComponent : customBookContent) {
@@ -167,12 +163,10 @@ public class BookManager {
         bookMeta.setAuthor("Server");
         book.setItemMeta(bookMeta);
 
-        if (MCVersion.getVersion().isMajorNewerThan(MCVersion.v1_13_R2.getMajorVersion())) {
+        if (MCVersion.getVersion().isMajorNewerThan(MCVersion.v1_14_R1.getMajorVersion())) {
             player.openBook(book);
             return;
-        }
-
-        if (MCVersion.getVersion().isMajorOlderThan(MCVersion.v1_12_R1.getMajorVersion())) {
+        } else {
             Bukkit.getLogger().warning("§4You are running an unsupported version! Don't expect support/working features!");
         }
 
@@ -191,7 +185,8 @@ public class BookManager {
             Constructor<?> keyConstructor = NMSUtils.getNMSClass("MinecraftKey").getConstructor(String.class);
             Object bookKey = keyConstructor.newInstance("minecraft:book_open");
 
-            Constructor<?> titleConstructor = NMSUtils.getNMSClass("PacketPlayOutCustomPayload").getConstructor(bookKey.getClass(), NMSUtils.getNMSClass("PacketDataSerializer"));
+            Constructor<?> titleConstructor = NMSUtils.getNMSClass("PacketPlayOutCustomPayload")
+                    .getConstructor(bookKey.getClass(), NMSUtils.getNMSClass("PacketDataSerializer"));
             Object payload = titleConstructor.newInstance(bookKey, packetDataSerializer);
 
             NMSUtils.sendPacket(player, payload);

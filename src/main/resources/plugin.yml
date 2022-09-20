@@ -1,7 +1,6 @@
 name: BookRules
 version: ${version}
 main: de.skyslycer.bookrules.BookRules
-api-version: 1.18
 prefix: BookRules
 author: Skyslycer
 softdepend: [ PlaceholderAPI ]

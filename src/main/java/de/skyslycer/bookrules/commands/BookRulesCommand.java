@@ -48,8 +48,8 @@ public class BookRulesCommand implements CommandExecutor, TabCompleter {
             }
 
             message = message + "§7Links:\n" +
-                    "§cDiscord:§7 https://discord.gg/jTkfTDGr5c\n" +
-                    "§cDownload:§7 http://bit.ly/bookrules";
+                    "§7Discord:§c " + BookRules.DISCORD_URL + "\n" +
+                    "§7Download:§c " + BookRules.DOWNLOAD;
 
             sender.sendMessage(message);
         } else if (args.length == 1) {
