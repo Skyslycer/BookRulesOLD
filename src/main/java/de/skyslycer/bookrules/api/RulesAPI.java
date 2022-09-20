@@ -81,21 +81,25 @@ public class RulesAPI {
                 try {
                     File file = new File("plugins//BookRules//players.txt");
                     file.createNewFile();
-                    FileReader reader = new FileReader("plugins//BookRules//players.txt");
-                    BufferedReader bufferedReader = new BufferedReader(reader);
-                    String line;
-
-                    while ((line = bufferedReader.readLine()) != null) {
-                        bookRules.players.add(line);
-                        bookRules.messageManager.sendDebug("Adding UUID " + line + " to cache (accepted the rules)");
-                    }
-
-                    reader.close();
+                    readLocalDB();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         });
+    }
+
+    private void readLocalDB() throws IOException {
+        FileReader reader = new FileReader("plugins//BookRules//players.txt");
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String line;
+
+        while ((line = bufferedReader.readLine()) != null) {
+            bookRules.players.add(line);
+            bookRules.messageManager.sendDebug("Adding UUID " + line + " to cache (accepted the rules)");
+        }
+
+        reader.close();
     }
 
     public void setPlayerData() {
@@ -144,16 +148,7 @@ public class RulesAPI {
 
                     writer.close();
                     bookRules.players.clear();
-                    FileReader reader = new FileReader("plugins//BookRules//players.txt");
-                    BufferedReader bufferedReader = new BufferedReader(reader);
-                    String line;
-
-                    while ((line = bufferedReader.readLine()) != null) {
-                        bookRules.players.add(line);
-                        bookRules.messageManager.sendDebug("Adding UUID " + line + " to cache (accepted the rules)");
-                    }
-
-                    reader.close();
+                    readLocalDB();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
