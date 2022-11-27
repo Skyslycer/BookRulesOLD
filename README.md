@@ -1,3 +1,6 @@
+# Project is now archived.
+## A new, better and updated BookRules is being built here: https://github.com/Skyslycedr/BookRules/
+
 ### BookRules
 
 **BookRules** is a rules plugin, where you need to accept the rules to play.
